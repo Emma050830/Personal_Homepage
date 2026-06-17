@@ -1,0 +1,3585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="我的数据小馆：一个展示真实自我数据、个性表达与交互彩蛋的个人主页。">
+  <meta name="color-scheme" content="light dark">
+  <title>我的数据小馆</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@4.9.0/map/js/china.js"></script>
+  <style>
+    /*
+      ============================
+      可编辑说明
+      1. 这是一个单文件静态页面，适合直接部署到公网。
+      2. 你后续主要修改：
+         - HTML 中带“可编辑”注释的文案和图片
+         - JS 中的 PROFILE / DATA_GALLERY / QUOTES / FORTUNES 数据
+      3. 页面不依赖前端框架，也不依赖外部图表库，兼容性更稳。
+      ============================
+    */
+
+    :root {
+      --bg: #f4eadb;
+      --bg-soft: #fff8f0;
+      --panel: rgba(255, 248, 240, 0.9);
+      --panel-strong: rgba(255, 252, 247, 0.98);
+      --text: #34231d;
+      --muted: #70594f;
+      --line: rgba(124, 86, 64, 0.22);
+      --accent: #c96d55;
+      --accent-deep: #8e4737;
+      --accent-soft: #f1c9ad;
+      --shadow: 0 20px 56px rgba(108, 72, 50, 0.14);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --max-width: 1180px;
+      --hero-grad: radial-gradient(circle at 12% 16%, rgba(238, 184, 131, 0.44), transparent 32%),
+        radial-gradient(circle at 84% 14%, rgba(210, 114, 86, 0.22), transparent 25%),
+        radial-gradient(circle at 52% 100%, rgba(248, 219, 183, 0.24), transparent 36%),
+        linear-gradient(135deg, #fbf0e2 0%, #f1e1d1 52%, #e9d7ca 100%);
+    }
+
+    body.dark {
+      --bg: #1d1716;
+      --bg-soft: #2f2724;
+      --panel: rgba(48, 39, 36, 0.9);
+      --panel-strong: rgba(55, 44, 40, 0.97);
+      --text: #f7efe7;
+      --muted: #e3d4c9;
+      --line: rgba(255, 233, 220, 0.18);
+      --accent: #f2a47f;
+      --accent-deep: #ffd0b2;
+      --accent-soft: rgba(242, 164, 127, 0.24);
+      --shadow: 0 24px 62px rgba(0, 0, 0, 0.3);
+      --hero-grad: radial-gradient(circle at 14% 12%, rgba(242, 164, 127, 0.18), transparent 34%),
+        radial-gradient(circle at 84% 14%, rgba(255, 215, 188, 0.1), transparent 24%),
+        radial-gradient(circle at 50% 100%, rgba(181, 109, 86, 0.12), transparent 34%),
+        linear-gradient(135deg, #251d1b 0%, #1c1614 55%, #15100f 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      font-size: 18px;
+      font-family: "Times New Roman", "KaiTi", "STKaiti", "Kaiti SC", "DFKai-SB", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(255, 250, 243, 0.88), transparent 24%),
+        radial-gradient(circle at 78% 18%, rgba(246, 214, 182, 0.34), transparent 28%),
+        radial-gradient(circle at 50% 120%, rgba(214, 118, 88, 0.12), transparent 34%),
+        var(--bg);
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .page-shell {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-shell::before,
+    .page-shell::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      width: 28rem;
+      height: 28rem;
+      border-radius: 999px;
+      filter: blur(18px);
+      pointer-events: none;
+      opacity: 0.52;
+    }
+
+    .page-shell::before {
+      top: -8rem;
+      right: -9rem;
+      background: rgba(229, 160, 118, 0.34);
+    }
+
+    .page-shell::after {
+      left: -10rem;
+      bottom: 6rem;
+      background: rgba(201, 109, 85, 0.18);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(18px);
+      background: rgba(249, 239, 228, 0.72);
+      border-bottom: 1px solid var(--line);
+    }
+
+    body.dark .topbar {
+      background: rgba(26, 21, 19, 0.76);
+    }
+
+    .topbar-inner,
+    .section,
+    .footer-inner {
+      width: min(var(--max-width), calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fffaf6;
+      box-shadow: var(--shadow);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .brand-copy strong,
+    .hero-copy h1,
+    .section-title h2 {
+      font-family: "Times New Roman", "KaiTi", "STKaiti", "Kaiti SC", "DFKai-SB", serif;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-copy strong {
+      font-size: 1rem;
+      line-height: 1.1;
+    }
+
+    .brand-copy span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .ghost-btn,
+    .solid-btn {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 10px 16px;
+      transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .ghost-btn {
+      background: rgba(255, 251, 246, 0.56);
+      color: var(--text);
+    }
+
+    .solid-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #fff8f2;
+      border-color: transparent;
+      box-shadow: 0 12px 24px rgba(139, 74, 53, 0.18);
+    }
+
+    .ghost-btn:hover,
+    .solid-btn:hover,
+    .avatar-button:hover,
+    .story-card:hover,
+    .fact-chip:hover {
+      transform: translateY(-2px);
+    }
+
+    .hero {
+      padding: 42px 0 28px;
+    }
+
+    .hero-panel {
+      background: var(--hero-grad);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 20px;
+      padding: 34px;
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 248, 242, 0.64);
+      border: 1px solid rgba(139, 74, 53, 0.12);
+      color: var(--accent-deep);
+      font-size: 0.88rem;
+      width: fit-content;
+    }
+
+    body.dark .eyebrow {
+      background: rgba(255, 238, 228, 0.08);
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(2.4rem, 5vw, 4.8rem);
+      line-height: 0.98;
+      margin: 0;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1.12rem;
+      line-height: 1.85;
+    }
+
+    .intro-tags,
+    .facts-row,
+    .nav-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag,
+    .fact-chip,
+    .nav-pills a {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 245, 0.52);
+      font-size: 0.92rem;
+    }
+
+    .nav-pills button {
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 245, 0.52);
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    body.dark .tag,
+    body.dark .fact-chip,
+    body.dark .nav-pills a,
+    body.dark .nav-pills button,
+    body.dark .ghost-btn {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-pills a:hover,
+    .nav-pills button:hover,
+    .nav-pills .is-active {
+      border-color: rgba(196, 111, 79, 0.4);
+      color: var(--accent-deep);
+    }
+
+    .portrait-card {
+      display: grid;
+      align-content: start;
+      gap: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      backdrop-filter: blur(12px);
+    }
+
+    .portrait-card small {
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .avatar-button {
+      position: relative;
+      border: 0;
+      background: none;
+      padding: 0;
+      transition: transform 0.25s ease;
+    }
+
+    .avatar-frame {
+      aspect-ratio: 4 / 5;
+      border-radius: 22px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(196, 111, 79, 0.18), rgba(244, 214, 191, 0.88)),
+        #ead9cb;
+      border: 1px solid rgba(139, 74, 53, 0.12);
+      position: relative;
+    }
+
+    .avatar-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-placeholder {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      color: var(--accent-deep);
+      text-align: center;
+      line-height: 1.8;
+      font-size: 0.98rem;
+    }
+
+    .quote-bubble {
+      border-radius: 18px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+      line-height: 1.75;
+      min-height: 96px;
+    }
+
+    .quote-bubble strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--accent-deep);
+    }
+
+    .section {
+      padding: 22px 0;
+    }
+
+    .page-stage {
+      position: relative;
+      width: min(var(--max-width), calc(100% - 32px));
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .stage-track {
+      display: flex;
+      width: 400%;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+
+    .stage-panel {
+      width: 25%;
+      flex: 0 0 25%;
+      padding: 0 0 10px;
+      opacity: 0.42;
+      transform: translateX(54px) scale(0.98);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+
+    .stage-panel.is-active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+
+    .section-shell {
+      padding: 16px 0 28px;
+    }
+
+    .section-card {
+      border-radius: var(--radius-xl);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 30px;
+      backdrop-filter: blur(12px);
+    }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .section-title h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 3vw, 2.5rem);
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 40rem;
+      line-height: 1.8;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+      gap: 18px;
+    }
+
+    .story-card,
+    .data-card,
+    .mini-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(255, 253, 249, 0.66), rgba(255, 243, 232, 0.42));
+      padding: 20px;
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    body.dark .story-card,
+    body.dark .data-card,
+    body.dark .mini-card {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .story-card h3,
+    .data-card h3,
+    .mini-card h3 {
+      margin: 0 0 12px;
+      font-size: 1.16rem;
+    }
+
+    .story-card p,
+    .mini-card p,
+    .data-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+      line-height: 1.85;
+    }
+
+    .story-list {
+      margin: 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .word-cloud {
+      position: relative;
+      min-height: 320px;
+      padding: 10px 0;
+      overflow: hidden;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(196, 111, 79, 0.08), transparent 24%),
+        radial-gradient(circle at 70% 38%, rgba(240, 211, 184, 0.22), transparent 26%),
+        radial-gradient(circle at 52% 78%, rgba(196, 111, 79, 0.06), transparent 20%);
+    }
+
+    .word-chip {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 10px 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.48);
+      color: var(--text);
+      line-height: 1.2;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(96, 67, 49, 0.06);
+      transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+    }
+
+    body.dark .word-chip {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .word-chip:hover {
+      z-index: 2;
+      transform: translateY(-4px) scale(1.12) !important;
+      border-color: rgba(196, 111, 79, 0.38);
+      background: rgba(255, 248, 242, 0.9);
+      box-shadow: 0 0 0 1px rgba(196, 111, 79, 0.1), 0 12px 30px rgba(196, 111, 79, 0.18), 0 0 28px rgba(196, 111, 79, 0.22);
+      filter: saturate(1.08);
+    }
+
+    body.dark .word-chip:hover {
+      background: rgba(62, 48, 42, 0.92);
+      box-shadow: 0 0 0 1px rgba(239, 154, 114, 0.12), 0 12px 30px rgba(0, 0, 0, 0.24), 0 0 26px rgba(239, 154, 114, 0.18);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .stat-tile {
+      border-radius: 16px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      padding: 16px;
+    }
+
+    .stat-tile strong {
+      display: block;
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+      color: var(--accent-deep);
+    }
+
+    .stat-tile span {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .data-layout {
+      display: grid;
+      gap: 18px;
+    }
+
+    .chart-panel,
+    .detail-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .overview-note {
+      color: var(--muted);
+      line-height: 1.8;
+      margin: 0;
+    }
+
+    .data-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      position: relative;
+    }
+
+    .data-overview-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255, 252, 248, 0.72), rgba(249, 236, 225, 0.34));
+      padding: 20px;
+      text-align: left;
+      min-height: 198px;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    body.dark .data-overview-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    }
+
+    .data-overview-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(196, 111, 79, 0.38);
+      box-shadow: 0 14px 32px rgba(80, 55, 39, 0.1);
+    }
+
+    .data-overview-card strong,
+    .detail-head strong {
+      display: block;
+      font-size: 1.08rem;
+      margin-bottom: 10px;
+    }
+
+    .data-overview-card span {
+      display: block;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 1rem;
+    }
+
+    .card-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin-bottom: 12px;
+      background: rgba(196, 111, 79, 0.1);
+      color: var(--accent-deep);
+      font-size: 0.8rem;
+    }
+
+    .card-hint {
+      position: absolute;
+      right: 18px;
+      bottom: 16px;
+      color: var(--accent-deep);
+      font-size: 0.86rem;
+    }
+
+    .chart-box {
+      position: relative;
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(255, 252, 247, 0.72), rgba(248, 234, 222, 0.34));
+      border: 1px solid var(--line);
+      min-height: 540px;
+    }
+
+    body.dark .chart-box {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+    }
+
+    .chart-box h3 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+    }
+
+    .chart-note {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .bars {
+      display: grid;
+      gap: 14px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 86px minmax(0, 1fr) 48px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bar-label,
+    .bar-value {
+      font-size: 1.02rem;
+    }
+
+    .bar-label {
+      color: var(--text);
+    }
+
+    .bar-track {
+      position: relative;
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(139, 74, 53, 0.08);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), #efb184);
+      transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .bar-value {
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .data-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .data-detail-shell {
+      position: absolute;
+      inset: 0;
+      display: none;
+      border-radius: 26px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 252, 247, 0.95), rgba(250, 245, 239, 0.88));
+      box-shadow: var(--shadow);
+      padding: 24px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      z-index: 3;
+    }
+
+    .data-detail-shell::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .data-detail-shell::-webkit-scrollbar-thumb {
+      background: rgba(196, 111, 79, 0.24);
+      border-radius: 999px;
+    }
+
+    body.dark .data-detail-shell {
+      background: linear-gradient(180deg, rgba(43, 36, 33, 0.95), rgba(34, 28, 25, 0.92));
+    }
+
+    .data-detail-shell.open {
+      display: block;
+      animation: detail-pop 0.35s ease;
+    }
+
+    @keyframes detail-pop {
+      from {
+        opacity: 0;
+        transform: scale(0.98) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .detail-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .detail-head {
+      min-width: 0;
+    }
+
+    .detail-head span {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.75;
+      display: block;
+    }
+
+    .back-btn {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.52);
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .section-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.48);
+      color: var(--text);
+    }
+
+    body.dark .section-back {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    body.dark .back-btn {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .music-layout,
+    .timeline-layout,
+    .mbti-layout,
+    .schedule-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+      gap: 16px;
+    }
+
+    .rank-list,
+    .timeline-list,
+    .city-notes,
+    .mbti-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .rank-list {
+      max-height: 620px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .timeline-list {
+      max-height: 560px;
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .rank-list::-webkit-scrollbar,
+    .timeline-list::-webkit-scrollbar,
+    .city-log::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .rank-list::-webkit-scrollbar-thumb,
+    .timeline-list::-webkit-scrollbar-thumb,
+    .city-log::-webkit-scrollbar-thumb {
+      background: rgba(196, 111, 79, 0.24);
+      border-radius: 999px;
+    }
+
+    .rank-item,
+    .timeline-item,
+    .city-note-item,
+    .mbti-item,
+    .city-side-card,
+    .schedule-side-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.28);
+      padding: 16px;
+    }
+
+    body.dark .rank-item,
+    body.dark .timeline-item,
+    body.dark .city-note-item,
+    body.dark .mbti-item,
+    body.dark .city-side-card,
+    body.dark .schedule-side-card {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .rank-item {
+      display: grid;
+      grid-template-columns: 56px 54px minmax(0, 1fr) 78px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .album-cover {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(196, 111, 79, 0.12), rgba(240, 211, 184, 0.42));
+      display: grid;
+      place-items: center;
+      color: var(--accent-deep);
+      font-size: 0.75rem;
+      text-align: center;
+      line-height: 1.4;
+      padding: 4px;
+    }
+
+    .album-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .rank-no {
+      font-size: 1.3rem;
+      color: var(--accent-deep);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rank-meta strong,
+    .timeline-item strong,
+    .city-note-item strong,
+    .mbti-item strong,
+    .city-side-card strong,
+    .schedule-side-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 800;
+    }
+
+    .rank-meta span,
+    .timeline-item span,
+    .city-note-item span,
+    .mbti-item span,
+    .city-side-card span,
+    .schedule-side-card span {
+      color: var(--muted);
+      line-height: 1.7;
+      display: block;
+      font-size: 1rem;
+    }
+
+    .rank-score {
+      text-align: right;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .mbti-bottom-tags {
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid var(--line);
+    }
+
+    .tag-cloud span {
+      border-radius: 999px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.42);
+      font-size: 0.92rem;
+    }
+
+    body.dark .tag-cloud span {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .mbti-side-visual {
+      min-height: 100%;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      padding: 16px;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(240, 211, 184, 0.22), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.18));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body.dark .mbti-side-visual {
+      background:
+        radial-gradient(circle at 20% 18%, rgba(239, 154, 114, 0.12), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    }
+
+    .mbti-side-visual img {
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      display: block;
+      border-radius: 22px;
+      object-fit: cover;
+      box-shadow:
+        0 18px 42px rgba(88, 61, 46, 0.12),
+        0 0 0 10px rgba(255, 250, 245, 0.34);
+      filter: saturate(1.02) contrast(1.01);
+      -webkit-mask-image: radial-gradient(circle at center, black 72%, transparent 100%);
+      mask-image: radial-gradient(circle at center, black 72%, transparent 100%);
+    }
+
+    body.dark .mbti-side-visual img {
+      box-shadow:
+        0 18px 42px rgba(0, 0, 0, 0.24),
+        0 0 0 10px rgba(255, 245, 238, 0.05);
+    }
+
+    .drama-slider {
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(280px, 72%);
+      gap: 16px;
+      padding-bottom: 8px;
+    }
+
+    .drama-slider::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .drama-slider::-webkit-scrollbar-thumb {
+      background: rgba(196, 111, 79, 0.28);
+      border-radius: 999px;
+    }
+
+    .drama-card {
+      scroll-snap-align: start;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.18));
+      padding: 20px;
+      min-height: 220px;
+    }
+
+    body.dark .drama-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    }
+
+    .drama-card strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1.08rem;
+    }
+
+    .drama-card p,
+    .drama-card span {
+      color: var(--muted);
+      line-height: 1.8;
+      margin: 0;
+      display: block;
+    }
+
+    .drama-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .drama-badges span {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(196, 111, 79, 0.08);
+      color: var(--accent-deep);
+      font-size: 0.84rem;
+    }
+
+    .city-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .map-card {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    body.dark .map-card {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .china-map {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .map-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .map-title {
+      color: var(--accent-deep);
+      margin: 0 0 16px;
+      font-size: 1.14rem;
+      font-weight: 800;
+    }
+
+    .map-province {
+      fill: var(--bg-soft);
+      stroke: var(--line);
+      stroke-width: 1.2;
+      cursor: pointer;
+      transition: fill 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+      transform-origin: center;
+    }
+
+    .map-province.visited {
+      fill: rgba(196, 111, 79, 0.28);
+    }
+
+    .map-province:hover,
+    .map-province.is-hovered {
+      fill: var(--accent);
+      filter: drop-shadow(0 0 10px rgba(196, 111, 79, 0.18));
+    }
+
+    .map-outline {
+      fill: rgba(255, 255, 255, 0.24);
+      stroke: rgba(139, 74, 53, 0.28);
+      stroke-width: 2.2;
+    }
+
+    .map-dash-line {
+      fill: none;
+      stroke: rgba(139, 74, 53, 0.36);
+      stroke-width: 2;
+      stroke-dasharray: 10 8;
+      stroke-linecap: round;
+    }
+
+    .map-tooltip {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: var(--accent);
+      font-weight: 700;
+      min-height: 24px;
+    }
+
+    .map-caption {
+      margin-top: 12px;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 1rem;
+    }
+
+    .city-log {
+      max-height: 410px;
+      overflow: hidden;
+      padding-right: 4px;
+      position: relative;
+    }
+
+    .city-log-track {
+      display: grid;
+      gap: 12px;
+      will-change: transform;
+      align-content: start;
+    }
+
+    .city-note-item {
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.25s ease, background 0.25s ease;
+    }
+
+    .city-note-item:hover {
+      transform: translateY(-2px);
+      border-color: rgba(196, 111, 79, 0.34);
+      background: rgba(255, 247, 239, 0.6);
+    }
+
+    body.dark .city-note-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .city-gallery-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      z-index: 4;
+      padding: 18px;
+      border-radius: 24px;
+      background: rgba(255, 251, 246, 0.96);
+      border: 1px solid var(--line);
+      overflow-y: auto;
+    }
+
+    body.dark .city-gallery-overlay {
+      background: rgba(43, 36, 33, 0.96);
+    }
+
+    .city-gallery-overlay.open {
+      display: block;
+    }
+
+    .city-layout.gallery-mode .map-card,
+    .city-layout.gallery-mode .city-log {
+      display: none;
+    }
+
+    .city-layout.gallery-mode {
+      grid-template-columns: 1fr;
+    }
+
+    .city-layout.gallery-mode .city-gallery-overlay {
+      position: relative;
+      inset: auto;
+      display: block;
+      width: 100%;
+      min-height: 0;
+      overflow: visible;
+    }
+
+    .city-gallery-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .city-gallery-meta {
+      color: var(--muted);
+      line-height: 1.75;
+      margin: 0 0 18px;
+    }
+
+    .city-gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .city-photo-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.42);
+      overflow: hidden;
+    }
+
+    body.dark .city-photo-card {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .city-photo-card img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      display: block;
+      filter: saturate(1.02) contrast(1.01);
+      -webkit-mask-image: radial-gradient(circle at center, black 78%, rgba(0, 0, 0, 0.92) 88%, transparent 100%);
+      mask-image: radial-gradient(circle at center, black 78%, rgba(0, 0, 0, 0.92) 88%, transparent 100%);
+    }
+
+    .city-photo-card span {
+      display: block;
+      padding: 10px 12px 12px;
+      color: var(--muted);
+      font-size: 0.96rem;
+      line-height: 1.7;
+    }
+
+    .city-gallery-empty {
+      border-radius: 18px;
+      border: 1px dashed var(--line);
+      padding: 18px;
+      color: var(--muted);
+      line-height: 1.85;
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    body.dark .city-gallery-empty {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .mbti-hero {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(196, 111, 79, 0.14), rgba(240, 211, 184, 0.28));
+    }
+
+    body.dark .mbti-hero {
+      background: linear-gradient(135deg, rgba(239, 154, 114, 0.12), rgba(255, 255, 255, 0.03));
+    }
+
+    .mbti-code {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      line-height: 1;
+      margin: 0 0 10px;
+      color: var(--accent-deep);
+      font-family: "Times New Roman", "KaiTi", "STKaiti", "Kaiti SC", "DFKai-SB", serif;
+    }
+
+    .schedule-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .schedule-row {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    body.dark .schedule-row {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .schedule-row strong {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .score-line {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 46px;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .score-line .bar-track {
+      height: 12px;
+    }
+
+    .detail-empty {
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .data-item {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.28);
+      padding: 14px 16px;
+    }
+
+    body.dark .data-item {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .data-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .data-item span {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.94rem;
+    }
+
+    .easter-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .interactive-box {
+      min-height: 320px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at 15% 18%, rgba(240, 211, 184, 0.45), transparent 30%),
+        linear-gradient(160deg, rgba(255, 249, 243, 0.7), rgba(245, 234, 223, 0.42));
+    }
+
+    body.dark .interactive-box {
+      background:
+        radial-gradient(circle at 15% 18%, rgba(239, 154, 114, 0.14), transparent 30%),
+        linear-gradient(160deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.02));
+    }
+
+    .interactive-box h3 {
+      margin: 0 0 8px;
+      font-size: 1.1rem;
+    }
+
+    .interactive-box p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 34rem;
+    }
+
+    .fortune-stage {
+      position: relative;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      margin-top: 14px;
+      border-radius: 20px;
+      border: 1px dashed rgba(196, 111, 79, 0.28);
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    body.dark .fortune-stage {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .fortune-stage,
+    .fortune-actions {
+      position: relative;
+      z-index: 2;
+    }
+
+    .fortune-card {
+      width: min(88%, 460px);
+      border-radius: 22px;
+      padding: 22px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      box-shadow: 0 10px 28px rgba(80, 55, 39, 0.12);
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+    }
+
+    .fortune-card.active {
+      transform: rotateX(3deg) rotateY(-3deg) translateY(-4px);
+    }
+
+    .fortune-card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--accent-deep);
+    }
+
+    .fortune-card p {
+      margin: 0;
+      color: var(--text);
+    }
+
+    .spark {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.95), rgba(239, 154, 114, 0.8));
+      pointer-events: none;
+      animation: spark-up 1200ms ease-out forwards;
+    }
+
+    @keyframes spark-up {
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-90px) scale(0.2);
+      }
+    }
+
+    .danmu-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+      border-radius: 24px;
+    }
+
+    .danmu-item {
+      position: absolute;
+      right: -20%;
+      top: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 252, 247, 0.8);
+      border: 1px solid rgba(196, 111, 79, 0.18);
+      color: var(--text);
+      white-space: nowrap;
+      box-shadow: 0 10px 24px rgba(95, 67, 51, 0.12);
+      animation: danmu-fly linear forwards;
+      backdrop-filter: blur(8px);
+    }
+
+    body.dark .danmu-item {
+      background: rgba(48, 39, 36, 0.78);
+      border-color: rgba(255, 208, 178, 0.16);
+    }
+
+    .danmu-item strong {
+      color: var(--accent-deep);
+      font-size: 0.9rem;
+    }
+
+    .danmu-item span {
+      font-size: 0.94rem;
+    }
+
+    @keyframes danmu-fly {
+      from {
+        transform: translateX(0);
+        opacity: 0.2;
+      }
+      8% {
+        opacity: 1;
+      }
+      to {
+        transform: translateX(-150vw);
+        opacity: 1;
+      }
+    }
+
+    .guestbook-panel {
+      display: grid;
+      gap: 14px;
+      height: 100%;
+      align-content: start;
+    }
+
+    .fortune-actions {
+      margin-top: auto;
+      padding-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .guestbook-card,
+    .action-card,
+    .guestbook-message {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.3);
+      padding: 16px;
+    }
+
+    body.dark .guestbook-card,
+    body.dark .action-card,
+    body.dark .guestbook-message {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .guestbook-card strong,
+    .action-card strong,
+    .guestbook-message strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .guestbook-card p,
+    .action-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+    }
+
+    .guestbook-form {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .guestbook-input,
+    .guestbook-textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--text);
+      font: inherit;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    body.dark .guestbook-input,
+    body.dark .guestbook-textarea {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .guestbook-input:focus,
+    .guestbook-textarea:focus {
+      border-color: rgba(196, 111, 79, 0.42);
+      box-shadow: 0 0 0 3px rgba(201, 109, 85, 0.12);
+    }
+
+    .guestbook-textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .guestbook-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .guestbook-tip {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .guestbook-feed {
+      display: grid;
+      gap: 10px;
+      max-height: 260px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .guestbook-feed::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .guestbook-feed::-webkit-scrollbar-thumb {
+      background: rgba(196, 111, 79, 0.24);
+      border-radius: 999px;
+    }
+
+    .guestbook-message {
+      padding: 14px 14px 12px;
+    }
+
+    .guestbook-message p {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .guestbook-message small {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .action-btn {
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 245, 0.52);
+      color: var(--text);
+      padding: 12px 10px;
+    }
+
+    body.dark .action-btn {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(196, 111, 79, 0.38);
+    }
+
+    .guestbook-note {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .burst-emoji {
+      position: absolute;
+      z-index: 5;
+      pointer-events: none;
+      font-size: 1.7rem;
+      line-height: 1;
+      animation: burst-float 1500ms ease-out forwards;
+      filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.12));
+    }
+
+    @keyframes burst-float {
+      from {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(0.7);
+      }
+      to {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(1.25) rotate(var(--rot));
+      }
+    }
+
+    .link-stack {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .link-card {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.34);
+      padding: 16px;
+    }
+
+    body.dark .link-card {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .link-card a {
+      color: var(--accent-deep);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .footer {
+      padding: 10px 0 44px;
+    }
+
+    .footer-inner {
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.94rem;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .hero-grid,
+      .about-grid,
+      .data-layout,
+      .easter-layout,
+      .music-layout,
+      .timeline-layout,
+      .mbti-layout,
+      .schedule-layout,
+      .city-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .section-title {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .data-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stage-panel {
+        transform: translateX(24px) scale(0.99);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .top-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .hero-grid,
+      .section-card {
+        padding: 22px;
+      }
+
+      .hero-copy h1 {
+        font-size: 2.3rem;
+      }
+
+      .bar-row {
+        grid-template-columns: 72px minmax(0, 1fr) 42px;
+        gap: 8px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .data-overview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rank-item {
+        grid-template-columns: 46px 46px minmax(0, 1fr);
+      }
+
+      .rank-score {
+        grid-column: 3;
+        text-align: left;
+      }
+
+      .drama-slider {
+        grid-auto-columns: 92%;
+      }
+
+      .detail-toolbar {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .page-stage {
+        width: min(var(--max-width), calc(100% - 20px));
+      }
+
+      .chart-box {
+        min-height: 620px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-badge">ME</div>
+          <div class="brand-copy">
+            <strong>我的数据小馆</strong>
+            <span>一份关于我自己的小型数据展览</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <nav class="nav-pills" aria-label="页面导航">
+            <button class="nav-panel-btn is-active" data-panel-target="home" type="button">主页</button>
+            <button class="nav-panel-btn" data-panel-target="about" type="button">自我介绍</button>
+            <button class="nav-panel-btn" data-panel-target="data" type="button">数据区</button>
+            <button class="nav-panel-btn" data-panel-target="easter-egg" type="button">交互彩蛋</button>
+          </nav>
+          <button class="ghost-btn" id="themeToggle" type="button" aria-label="切换明暗主题">切换氛围</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-stage">
+        <div class="stage-track" id="stageTrack">
+          <section class="stage-panel is-active" data-panel="home">
+            <div class="section-shell">
+              <section class="hero section">
+                <div class="section hero-panel reveal visible">
+                  <div class="hero-grid">
+                    <div class="hero-copy">
+                      <div>
+                        <div class="eyebrow">My Tiny Data Cafe</div>
+                        <!-- 可编辑：这里改成你的标题、副标题和一句总介绍 -->
+                        <h1 id="heroTitle">Welcome to My Tiny Data Cafe!</h1>
+                      </div>
+                      <p id="heroDescription">
+                        这里不是流水线式自我介绍，而是一家只营业给真实生活的“小馆”。
+                        我把自己的课程节奏、兴趣偏好、情绪标签和一些碎碎念整理成数据，
+                        用页面把它们摆出来，希望别人看到的不是“模板里的我”，而是有温度、有习惯、有偏执的小小样本。
+                      </p>
+                      <div class="intro-tags" id="heroTags"></div>
+                      <div class="facts-row" id="heroFacts"></div>
+                    </div>
+
+                    <aside class="portrait-card">
+                      <button class="avatar-button" id="avatarButton" type="button" aria-label="点击头像查看不同吐槽">
+                        <div class="avatar-frame">
+                          <!--
+                            可编辑：这里替换成你的代表图
+                            用法：
+                            1. 把图片放在同目录，例如 ./images/me.jpg
+                            2. 取消下面 img 的注释，并改 src
+                            3. 如果暂时没有图片，就先保留占位内容
+                          -->
+                          <img src="./images/Home.jpg" alt="我的代表图">
+                          <!-- <div class="avatar-placeholder">
+                            这里放一张最像你的图<br>
+                            可以是照片、插画、作品截图<br>
+                            或任何“别人一看就知道是你”的画面
+                          </div> -->
+                        </div>
+                      </button>
+                      <div class="quote-bubble" id="quoteBubble" aria-live="polite">
+                        <strong>点击头像试试看</strong>
+                        <span id="quoteText">我会轮播几句关于自己的真实吐槽，这里就是本页的第一个小彩蛋。</span>
+                      </div>
+                      <!-- <small>
+                        提示：如果你部署到公网，建议把图片资源也放在项目文件夹中，避免引用本地磁盘路径导致上线后无法显示。
+                      </small> -->
+                    </aside>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="stage-panel" data-panel="about">
+            <div class="section-shell">
+              <button class="section-back" data-panel-target="home" type="button">返回主页</button>
+              <section class="section">
+                <div class="section-card">
+                  <div class="section-title">
+                    <div>
+                      <h2>About Me</h2>
+                      <p>只要有足够多的标签，就能拟合出最真实的我。</p>
+                    </div>
+                  </div>
+
+                  <div class="about-grid">
+                    <article class="story-card">
+                      <h3>马若彤</h3>
+                      <!-- 可编辑：这里放你的昵称 / 专业 / 年级 -->
+                      <p id="profileLine">昵称：你的昵称 | 专业：你的专业 | 年级：你的年级</p>
+                      <div class="stats-grid" id="profileStats"></div>
+                    </article>
+
+                    <article class="story-card">
+                      <h3>你可以这样记住我......</h3>
+                      <!-- 可编辑：这里会自动读取 JS 中的 memoryCloud 生成词云 -->
+                      <div class="word-cloud" id="memoryCloud"></div>
+                    </article>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="stage-panel" data-panel="data">
+            <div class="section-shell">
+              <button class="section-back" data-panel-target="home" type="button">返回主页</button>
+              <section class="section">
+                <div class="section-card">
+                  <div class="section-title">
+                    <div>
+                      <h2>Datasets</h2>
+                      <p>
+                        本数据展厅包含六个小展厅，分别展示了我的课程节奏、兴趣偏好、情绪标签、城市足迹、MBTI 类型和个人经历。点击小标签即可详细浏览每个展厅的内容。
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="data-layout">
+                    <div class="chart-panel">
+                      <article class="chart-box">
+                        <h3>我的数据展厅总览</h3>
+                        <p class="chart-note">
+                          “我会一直将世界收集进我的口袋，直至我凌于山壑万里，一生自由随风而起。”
+                        </p>
+                        <div class="data-overview-grid" id="dataOverviewGrid" aria-label="数据卡片总览"></div>
+                        <div class="data-detail-shell" id="dataDetailShell" aria-live="polite">
+                          <div class="detail-toolbar">
+                            <div class="detail-head">
+                              <strong id="detailTitle">数据详情</strong>
+                              <span id="detailDescription">点开卡片后，这里会显示对应板块的详细内容。</span>
+                            </div>
+                            <button class="back-btn" id="detailBackButton" type="button">返回总览</button>
+                          </div>
+                          <div class="detail-panel" id="detailPanel"></div>
+                        </div>
+                      </article>
+
+                      <article class="mini-card">
+                        <h3>为什么这样设计</h3>
+                        <p id="dataReason">
+                          在这里我把“关于我”的不同侧面拆成多个可探索的小房间，详细内容请点开卡片之后再看，
+                          如此，让每份真实数据都拥有自己的叙事方式。
+                        </p>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+
+          <section class="stage-panel" data-panel="easter-egg">
+            <div class="section-shell">
+              <button class="section-back" data-panel-target="home" type="button">返回主页</button>
+              <section class="section">
+                <div class="section-card">
+                  <div class="section-title">
+                    <div>
+                      <h2>交互彩蛋区</h2>
+                      <p>除了头像吐槽和主题切换，这里还放了一个“今日抽签”。点击按钮会抽出一条属于你的状态卡片，并撒出小光点。</p>
+                    </div>
+                  </div>
+
+                  <div class="easter-layout">
+                    <div class="interactive-box" id="sparkBox">
+                      <div class="danmu-layer" id="danmuLayer" aria-hidden="true"></div>
+                      <h3>今日状态抽签机</h3>
+                      <p>
+                        这是一个很适合写进作业说明里的原创小设计：把你平时的口头禅、常见状态、学习日情绪做成“抽签文案”，
+                        点击一次就像把今天的你翻出来看一眼。
+                      </p>
+                      <button class="solid-btn" id="fortuneButton" type="button">点击抽一张</button>
+                      <div class="fortune-stage">
+                        <div class="fortune-card" id="fortuneCard" aria-live="polite">
+                          <strong>等待抽签</strong>
+                          <p id="fortuneText">今天的我还没被定义，按一下按钮试试。</p>
+                        </div>
+                      </div>
+
+                      <div class="fortune-actions">
+                        <div class="action-card">
+                          <strong>小互动按钮</strong>
+                          <p>除了抽签，还可以随手点一点，把这个角落变得更热闹一点。</p>
+                          <div class="action-grid">
+                            <button class="action-btn" id="fireworksButton" type="button">放烟花</button>
+                            <button class="action-btn" id="heartBurstButton" type="button">点爱心</button>
+                            <button class="action-btn" id="cheerBurstButton" type="button">点点赞</button>
+                            <button class="action-btn" id="shuffleDanmuButton" type="button">弹幕再来</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <aside class="guestbook-panel">
+                      <div class="guestbook-card">
+                        <strong>留言板</strong>
+                        <p>可以在这里留下想说的话~</p>
+                        <form class="guestbook-form" id="guestbookForm">
+                          <input class="guestbook-input" id="guestNameInput" type="text" maxlength="18" placeholder="怎么称呼你（可选）">
+                          <textarea class="guestbook-textarea" id="guestMessageInput" maxlength="80" placeholder="留一句温柔、有趣或打气的话吧"></textarea>
+                          <div class="guestbook-toolbar">
+                            <button class="solid-btn" type="submit">发送留言</button>
+                            <!-- <span class="guestbook-tip">你可以在源码或浏览器本地存储里删除留言，保留你的编辑权。</span> -->
+                          </div>
+                        </form>
+                      </div>
+
+                      <div class="guestbook-card">
+                        <strong>最近留言</strong>
+                        <div class="guestbook-feed" id="guestbookFeed"></div>
+                        <p class="guestbook-note">如果你之后想手动清空，可以删除本地存储中的留言数据，或者直接在源码里的初始留言数组里改。</p>
+                      </div>
+                    </aside>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>页面名称：我的数据小馆</span>
+        <span>建议提交时：把本文件和图片资源一起打包</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    /*
+      ============================
+      你最需要编辑的地方：下面这组数据
+      ============================
+    */
+
+    // 可编辑：你的基础信息
+    const PROFILE = {
+      nickname: "Emma或者蘑菇&茄子吧~",
+      major: "智能感知工程",
+      grade: "23级",
+      heroTitle: "Welcome to My Tiny Data Cafe!",
+      heroDescription:
+        "这里不是流水线式自我介绍，而是一家只营业给真实生活的“小馆”。我把自己的课程节奏、兴趣偏好、情绪标签和一些碎碎念整理成数据，用页面把它们摆出来，希望别人看到的不是“模板里的我”，而是有温度、有习惯、有偏执的小小样本。",
+      tags: ["真实数据", "非模板自我介绍", "一点理性 + 一点碎碎念"],
+      facts: ["喜欢把生活量化", "经常在 ddl 前突然高效", "会认真设计小彩蛋"],
+      introParagraphs: [
+        "我是一个会一边焦虑、一边做表格、一边继续推进任务的人。",
+        "相比“全能型选手”，我更像“靠兴趣驱动突然爆发型选手”。",
+        "我对好看的页面、准确的信息表达和有趣的细节都很在意。",
+        "如果一个作品里既有数据逻辑、又有一点个人气味，我通常会做得很起劲。"
+      ],
+      memoryCloud: [
+        { text: "真诚", size: 1.48, rotate: -4, x: 7, y: 12, tone: 0 },
+        { text: "细节控", size: 1.22, rotate: 3, x: 53, y: 10, tone: 1 },
+        { text: "爱情慢热选手", size: 1.08, rotate: -5, x: 67, y: 28, tone: 2 },
+        { text: "时间管理大师", size: 1.2, rotate: 4, x: 11, y: 36, tone: 3 },
+        { text: "审美敏感", size: 1.3, rotate: -2, x: 41, y: 34, tone: 0 },
+        { text: "ddl 驱动", size: 1.14, rotate: 5, x: 3, y: 62, tone: 1 },
+        { text: "有点倔", size: 1.18, rotate: -3, x: 61, y: 54, tone: 2 },
+        { text: "爱记录", size: 1.1, rotate: 3, x: 27, y: 60, tone: 3 },
+        { text: "会反复修改", size: 1.34, rotate: -2, x: 31, y: 78, tone: 0 },
+        { text: "喜欢有温度的表达", size: 1.26, rotate: 2, x: 51, y: 72, tone: 1 }
+      ],
+      stats: [
+        { value: "2005.08.30", label: "希望得到所有人的爱和祝福" },
+        { value: "ENFJ", label: "是让人十分心安的大宝剑呐" },
+        { value: "9:00-00:30", label: "高精力人日常活跃时间" },
+        { value: "2023.12.24", label: "一个属于两个人的日期❤" },
+      ]
+    };
+
+    /*
+      可编辑：数据展厅总配置
+      说明：
+      1. overviewCards 控制首页显示哪些卡片
+      2. details 中的每个 key 对应一张可点开的详细卡片
+      3. 你可以继续增删卡片，但请保持 overviewCards 的 id 和 details 的 key 对应
+    */
+    const DATA_GALLERY = {
+      overviewCards: [
+        {
+          id: "experience",
+          kicker: "Timeline",
+          title: "个人经历",
+          summary: "那些有关学业、科研、竞赛、社团、实习......来看看我的成长轨迹吧！"
+        },
+        {
+          id: "music",
+          kicker: "Top 20",
+          title: "歌单排行榜",
+          summary: "这里展示我的循环歌单，快来看看我们的听歌品味是否契合呢？"
+        },
+        {
+          id: "drama",
+          kicker: "Slide",
+          title: "追过的剧",
+          summary: "阅剧千万，每部剧都可以配一句我的私人吐槽和一个情绪标签。"
+        },
+        {
+          id: "cities",
+          kicker: "Map",
+          title: "去过的城市",
+          summary: "用地图点亮足迹，再配时间、地点和碎碎念，这是我的专属旅行记忆墙。"
+        },
+        {
+          id: "mbti",
+          kicker: "Persona",
+          title: "MBTI 侧写",
+          summary: "不是简单贴标签，而是拆成我的沟通方式、做事节奏和情绪习惯。"
+        },
+        {
+          id: "schedule",
+          kicker: "Score",
+          title: "本学期课表 + 主观打分",
+          summary: "保留评分条形图的形式，把课表、投入感和真实体感放在一起展示。"
+        }
+      ],
+      details: {
+        experience: {
+          title: "个人经历",
+          description: "把经历按时间排开之后，更容易看出我在不同阶段的成长轨迹。",
+          type: "timeline",
+          leftTitle: "我的成长时间线",
+          rightTitle: "More about me",
+          // summary: "这里不是简单列举成就，而是展示我如何一路走成现在的自己。",
+          summary: "一些有关我的联系方式、网站链接和文章发表......",
+          contactCards: [
+            {
+              title: "邮箱: ",
+              html: `
+
+                <a href="mailto:ruotong0830@gmail.com">ruotong0830@gmail.com</a><br>
+                <a href="mailto:maruotong@sjtu.edu.cn">maruotong@sjtu.edu.cn</a><br>
+                <a href="mailto:18918160010@163.com">18918160010@163.com</a>
+              `
+            },
+            {
+              title: "GitHub: ",
+              html: `<a href="https://github.com/Emma050830" target="_blank" rel="noopener noreferrer">https://github.com/Emma050830</a>`
+            },
+            {
+              title: "arXiv: ",
+              html: `<a href="https://arxiv.org/abs/2605.02297" target="_blank" rel="noopener noreferrer">https://arxiv.org/abs/2605.02297</a>`
+            }
+          ],
+          items: [
+            { time: "2023.09", title: "进入大学，开始适应专业学习节奏", note: "一边新鲜一边慌张，最常做的事情是给自己做任务清单。" },
+            { time: "2024.03", title: "第一次加入学生组织：电院学生会、校学联、电院青志队......", note: "开始意识到我比起考试，更容易在学生工作里找到成就感。" },
+            { time: "2024.11", title: "成为电院学生会主席团成员！", note: "没想到成为电院版戈尔巴乔夫哈~" },
+            { time: "2024.12", title: "第一次演唱会是Charlie Puth的", note: "发烧但幸福，喜欢了将近十年的歌手" },
+            { time: "2025.05", title: "在一起500天啦！", note: "要一直在一起，一直幸福下去~" },
+            { time: "2025.06", title: "加入Leap Group，开始第一段自己lead的科研经历", note: "有对联邦学习&遗忘学习感兴趣的嘛？" },
+            { time: "2025.07", title: "初次成为社会实践团团长", note: "从团员到团长的转变，喜欢整件事情都握在手心的感觉。" },
+            { time: "2025.08", title: "满二十岁啦！当天和npy一起看邓紫棋演唱会好幸运好幸福ww", note: "2025年最幸福的一天啊" },
+            { time: "2025.11", title: "成为自感学生会第一届主席团成员！", note: "连任！加班!" },
+            { time: "2025.12", title: "获得绍裘奖学金", note: "离国家奖学金一步之遥ww有些可惜呢" },
+            { time: "2026.01", title: "第一次投稿ICML！", note: "虽然过程很曲折，但我觉得这个作品已经很能代表现在的我了。" },
+            { time: "2026.05", title: "ICML高分reject......没事，还有NIPS！", note: "5543的reject虽然很惋惜，但是挫折才是科研的常态~" },
+            { time: "2026.06", title: "收到海康威视实习offer啦", note: "第一次实习请好好珍惜。" }
+          ],
+          highlights: []
+        },
+        music: {
+          title: "歌单 Top 20",
+          description: "“反复循环”本身就是最诚实的偏好证明。",
+          type: "music",
+          favorites: {
+            singer: "StrayKids、Taylor Swift......",
+            mood: "Want， Feel， Love......",
+            moment: "各种学习时刻、深夜emo、雨天、晴天、通勤......"
+          },
+          genres: ["流行", "R&B", "电影原声", "K-pop", "欧美", "深夜循环"],
+          topTracks: [
+            { rank: 1, song: "Enchanted", artist: "Taylor Swift", note: "梦幻感特别足，像把一场让人上头的相遇反复回放，越到深夜越好听。", score: "122 次", cover: "./images/album/album-01.jpg" },
+            { rank: 2, song: "LALALALA", artist: "Stray Kids", note: "鼓点和气场都很猛，特别像把杂乱情绪一脚踹开，提神效果一流。", score: "84 次", cover: "./images/album/album-02.jpg" },
+            { rank: 3, song: "Cover Me", artist: "Stray Kids", note: "有种带着脆弱感的求救氛围，情绪低一点的时候听会特别容易陷进去。", score: "81 次", cover: "./images/album/album-03.jpg" },
+            { rank: 4, song: "想你时风起", artist: "单依纯", note: "很柔也很有后劲，像思念被风一点点吹开，适合安静发呆的时候单曲循环。", score: "73 次", cover: "./images/album/album-04.jpg" },
+            { rank: 5, song: "Hype Boy", artist: "NewJeans", note: "轻盈又黏人的节奏感太强了，心情一低就很需要这种不费力的快乐。", score: "73 次", cover: "./images/album/album-05.jpg" },
+            { rank: 6, song: "S-Class", artist: "Stray Kids", note: "编排很炸，听感像一路开挂往前冲，特别适合做事前给自己强行拉满状态。", score: "73 次", cover: "./images/album/album-06.jpg" },
+            { rank: 7, song: "Midas Touch", artist: "KISS OF LIFE", note: "复古闪光感很足，副歌一出来就有种‘今天本小姐状态很好’的感觉。", score: "72 次", cover: "./images/album/album-07.jpg" },
+            { rank: 8, song: "Off To The Races", artist: "Lana Del Rey", note: "华丽、危险、上头，还带一点失控的电影感，是那种越听越沉迷的歌。", score: "66 次", cover: "./images/album/album-08.jpg" },
+            { rank: 9, song: "MEGAVERSE", artist: "Stray Kids", note: "信息量大到像在横冲直撞地开新地图，适合脑子想要一点高强度刺激的时候。", score: "65 次", cover: "./images/album/album-09.jpg" },
+            { rank: 10, song: "在加纳共和国离婚（Live）", artist: "杨坤/张碧晨", note: "现场版的拉扯感很强，情绪推进特别稳，越听越能品出那种无奈和克制。", score: "64 次", cover: "./images/album/album-10.jpg" },
+            { rank: 11, song: "Perfect Night", artist: "LE SSERAFIM", note: "松弛又亮晶晶的快乐感很完整，像和朋友出门前已经先把今晚判定成好夜晚。", score: "63 次", cover: "./images/album/album-11.jpg" },
+            { rank: 12, song: "BLIND SPOT", artist: "Stray Kids", note: "不是最张扬的那首，但情绪很真，像在承认自己的缺口之后还是继续往前走。", score: "62 次", cover: "./images/album/album-12.jpg" },
+            { rank: 13, song: "DASH", artist: "NMIXX", note: "推进感很强，节奏切换也很利落，特别适合一边整理事情一边给自己打鸡血。", score: "61 次", cover: "./images/album/album-13.jpg" },
+            { rank: 14, song: "MANIAC", artist: "Stray Kids", note: "那种带点疯感和怪趣味的张力非常耐听，隔一阵子就会被我重新翻出来。", score: "61 次", cover: "./images/album/album-14.jpg" },
+            { rank: 15, song: "exile", artist: "Taylor Swift / Bon Iver", note: "冷静得很痛，像两个人隔着雪夜对话，越克制越显得难过。", score: "55 次", cover: "./images/album/album-15.jpg" },
+            { rank: 16, song: "NEW DANCE", artist: "XG", note: "节拍很轻快，整首歌都像在催人起身晃一晃，适合给疲惫的一天换个频道。", score: "52 次", cover: "./images/album/album-16.jpg" },
+            { rank: 17, song: "SEE SEA", artist: "孝琳", note: "海风感和夏天感都太足了，听着会自动脑补阳光、海边和慢慢松下来的心情。", score: "51 次", cover: "./images/album/album-17.jpg" },
+            { rank: 18, song: "狂恋", artist: "GALI / 万妮达", note: "张力和暧昧感都很直给，像情绪被推到最热的时候，听感特别带劲。", score: "50 次", cover: "./images/album/album-18.jpg" },
+            { rank: 19, song: "Satisfied", artist: "Hamilton", note: "语速、情绪和戏剧张力一起往上冲，属于会让我边惊叹边循环的舞台型神曲。", score: "49 次", cover: "./images/album/album-19.jpg" },
+            { rank: 20, song: "SHOOTING STAR", artist: "XG", note: "自信和闪光感非常完整，像把‘我知道我很会’这件事写成了一首歌。", score: "49 次", cover: "./images/album/album-20.jpg" }
+          ]
+        },
+        drama: {
+          title: "追过的剧",
+          description: "这一块点开后做成横向滑动最自然，像把追剧记忆一张张翻过去。",
+          type: "drama",
+          hint: "左右滑动浏览每张剧集卡片",
+          items: [
+            {
+              name: "给阿嫲的情书",
+              year: "2026",
+              comment: "最戳我的不是大开大合的煽情，而是那种很慢、很土、很真诚的牵挂感，看完会想起家里长辈。",
+              tags: ["亲情向", "潮汕气质", "后劲绵长"]
+            },
+            {
+              name: "飞驰人生3",
+              year: "2026",
+              comment: "表面上是热血和嘴贫，底下还是那股不服输的劲儿，很适合在状态低的时候看一部给自己加速。",
+              tags: ["燃起来了", "赛车", "会笑也会热血"]
+            },
+            {
+              name: "惊蛰无声",
+              year: "2026",
+              comment: "这种压着劲儿往前推的悬疑感我很吃，越安静越让人想追着每个细节往下看。",
+              tags: ["悬疑", "细节控友好", "气压很低"]
+            },
+            {
+              name: "捕风追影",
+              year: "2025",
+              comment: "动作戏看得很过瘾，但我更喜欢它那种一路追着真相跑的紧迫感，节奏很顶。",
+              tags: ["动作片", "追查感", "节奏在线"]
+            },
+            {
+              name: "恶意",
+              year: "2025",
+              comment: "会让人一直揣测每个人到底藏了什么，看的过程里脑子完全停不下来。",
+              tags: ["悬疑推理", "人性", "猜不到结局"]
+            },
+            {
+              name: "哪吒 2",
+              year: "2025",
+              comment: "情绪和场面都更满了，爽感很足，但真正让我记住的还是人物之间那种又拧又真诚的牵连。",
+              tags: ["国漫", "燃炸", "情感浓度高"]
+            },
+            {
+              name: "热辣滚烫",
+              year: "2024",
+              comment: "它最打动我的不是逆袭本身，而是一个人终于决定认真对待自己的那股劲儿。",
+              tags: ["女性成长", "会共情", "越看越想鼓掌"]
+            },
+            {
+              name: "镖人",
+              year: "2023",
+              comment: "有种粗粝又很带感的江湖气，人物一站出来就有故事，特别适合喜欢群像的人。",
+              tags: ["江湖感", "群像", "画风很顶"]
+            },
+            {
+              name: "哪吒 1",
+              year: "2019",
+              comment: "热血是最外层，真正让我反复想起的是那句‘我命由我不由天’背后的倔强感。",
+              tags: ["国漫经典", "少年感", "会重温"]
+            },
+            {
+              name: "我不是药神",
+              year: "2018",
+              comment: "看完很难立刻把情绪抽出来，它把现实的疼痛感拍得太近，也太真了。",
+              tags: ["现实主义", "催泪", "余味很重"]
+            },
+            {
+              name: "疯狂动物城",
+              year: "2016",
+              comment: "表面轻松可爱，里面其实塞了很多关于偏见和自我证明的东西，属于越长大越能看懂的片子。",
+              tags: ["动画", "反偏见", "轻松但不浅"]
+            },
+            {
+              name: "怦然心动",
+              year: "2010",
+              comment: "很适合在心软的时候看，干净又明亮，像把青春期里最细小的心动都认真保存了下来。",
+              tags: ["青春", "治愈", "心动感"]
+            },
+            {
+              name: "傲慢与偏见",
+              year: "2005",
+              comment: "这版的氛围和情绪流动都太美了，克制里带着汹涌，属于会反复回味眼神戏的电影。",
+              tags: ["爱情片", "古典气质", "眼神拉扯"]
+            },
+            {
+              name: "千与千寻",
+              year: "2001",
+              comment: "小时候看觉得奇幻，长大后看更觉得温柔又残酷，它总能在不同阶段戳到不同的地方。",
+              tags: ["宫崎骏", "成长", "温柔但锋利"]
+            },
+            {
+              name: "楚门的世界",
+              year: "1998",
+              comment: "每次想起它都会觉得很震，明明不靠大场面，却能把‘被观看的人生’讲得特别有穿透力。",
+              tags: ["经典电影", "存在感拷问", "越想越妙"]
+            },
+            {
+              name: "教父",
+              year: "1972",
+              comment: "不是那种靠快节奏吸引人的电影，但人物、权力和命运的压迫感会让人越看越沉进去。",
+              tags: ["经典", "家族叙事", "气场很强"]
+            }
+          ]
+        },
+        cities: {
+          title: "去过的城市",
+          description: "地图负责一眼看懂足迹，右侧滚动记录负责保留旅途里的情绪和细节。",
+          type: "cities",
+          caption: "这是一张中国足迹图，标记着我去过的城市，点击右方的旅游地点可以看到对应的旅行照片。",
+          cities: [
+            { name: "上海", x: 78, y: 45 },
+            { name: "北京", x: 68, y: 24 },
+            { name: "杭州", x: 76, y: 49 },
+            { name: "成都", x: 47, y: 49 },
+            { name: "广州", x: 68, y: 68 },
+            { name: "海口", x: 63, y: 87 },
+            { name: "台北", x: 88, y: 58 }
+          ],
+          logs: [
+            { time: "2026.05", place: "苏州", note: "苏州半日游但是周深演唱会啊啊啊啊啊！！！", photos: "2026_05_苏州" },
+            { time: "2026.05", place: "徐州 + 济南", note: "和男朋友一起旅游的第 n 个地方，很好吃、饭量很大的两个地方！", photos: "2026_05_徐州济南" },
+            { time: "2025.12", place: "北京 + 天津", note: "专门为了两周年而准备的见面（𝑾𝒊𝒕𝒉 𝒚𝒐𝒖｜贰周年快乐🌷）", photos: "2025_12_北京天津" },
+            { time: "2025.11", place: "南京", note: "印象中的南京是红山动物园、玄武湖、中山陵和一起看的《Zootopia 2》。", photos: "2025_11_南京" },
+            { time: "2025.08", place: "台州", note: "台州就是很糯叽叽啊，甜品脑和海鲜脑袋的天堂！", photos: "2025_08_台州" },
+            { time: "2025.07", place: "如皋", note: "担任团长的一次社会实践（先进个人 +1）。", photos: "2025_07_如皋" },
+            { time: "2025.07", place: "杭州", note: "第二次见 Charlie Puth！以及和老母亲在 37 度高温下勇闯天下第一财神庙 + 日行三万五步。", photos: "2025_07_杭州" },
+            { time: "2025.05", place: "银川 + 中卫", note: "四人行 with 男朋友、xh & csl，近几年最出片的旅行！（怀念宁夏滩羊啊）", photos: "2025_05_银川中卫" },
+            { time: "2025.04", place: "温州", note: "三人行 with 男朋友 & hhy，喜欢温州的海鲜和雁荡山。", photos: "2025_04_温州" },
+            { time: "2025.03", place: "北京", note: "特意给男朋友准备的 20 岁生日惊喜！", photos: "2025_03_北京" },
+            { time: "2025.01", place: "大理", note: "和海菜花开剧组赴大理的公费旅游，谁懂群像的美好和震撼感~", photos: "2025_01_大理" },
+            { time: "2024.07", place: "赣州 + 信丰 + 瑞金", note: "第一次社会实践，收获满满！", photos: "2024_07_赣州" },
+            { time: "2024.06", place: "乌镇 + 杭州", note: "虽然算家门口，但每次回去都会有小旅行的感觉，喜欢在不同街区走走看看。", photos: "2024_06_乌镇杭州" },
+            { time: "2024.05", place: "青岛", note: "Double Date~喜欢有山有水的城市！海风和城市节奏都很舒服，是会让我想起很轻松状态的一站。", photos: "2024_05_青岛" },
+            { time: "2024.01", place: "北京", note: "冬天的北京总有种很鲜明的记忆点，冷、亮，也很适合把见面本身记很久......是在一起以后一起旅行的第一个城市（1月12日真是好日子~）", photos: "2024_01_北京" },
+            { time: "2023.07", place: "苏州", note: "高考后的短暂逃离日常，园林和街巷都很适合慢慢走。", photos: "2023_07_苏州" }
+          ]
+        },
+        mbti: {
+          title: "MBTI 侧写",
+          description: "把 MBTI 从一个四字母标签，展开成更具体的行为特征和自我观察。",
+          type: "mbti",
+          code: "ENFJ",
+          alias: "理想主义践行者",
+          intro: "很容易被热烈、有生命力的表达打动，也会不自觉地想把一个好想法变成能感染大家的真实行动",
+          traits: [
+            { title: "沟通方式", text: "天生的组织者与倾听者，在不熟的时候也会主动破冰，习惯用真诚的反馈去照顾到场上每一个人的情绪。" },
+            { title: "做事节奏", text: "平时看起来充满干劲，真正开始推进项目时会展现出极强的行动力，擅长调动资源并拉着大家一起往前跑。" },
+            { title: "情绪来源", text: "会因为团队达成了不起的共识、或者听到一句真诚的认可而充满电；也会因为感知到同伴的消极情绪而陷入自我反思。" }
+          ],
+          tags: ["强共情力", "现身说法", "极致利他", "拒绝冷场", "讨厌画大饼"]
+        },
+        schedule: {
+          title: "本学期课表 + 主观打分",
+          description: "这一块保留条形评分，但和课表信息放在一起，会更像“我的学习生活切片”。",
+          type: "schedule",
+          maxValue: 10,
+          courses: [
+            { name: "计算机视觉", time: "周二 3-4 节", score: 9.2, note: "内容最贴近兴趣，做项目的时候会明显更有投入感。" },
+            { name: "大数据分析与挖掘", time: "周一 7-8 节， 周四 3-4 节", score: 9.0, note: "是一直想学习的板块，理论部分不轻松，但一旦理解之后很有成就感。" },
+            { name: "政治经济学经典导读", time: "周二 11-13 节", score: 8.9, note: "文科向来不是擅长领域啦，但老师讲的太引人入胜了。" },
+            { name: "智能控制与实践", time: "周一 11-12 节", score: 8.8, note: "相对平稳的一门课，适合作为调剂节奏的缓冲带。" }
+          ],
+          summaryCards: [
+            { title: "本学期最喜欢", text: "计算机视觉，老师讲的内容就特别吸引人啊" },
+            { title: "最挑战我的", text: "检测技术，工作量真的很大啊......" },
+            { title: "我的上课状态", text: "靠咖啡续命型 / 后排摸鱼版 / 电脑重度依赖者 / Prompt大师" }
+          ]
+        }
+      }
+    };
+
+    // 可编辑：点击头像时轮播的文案
+    const QUOTES = [
+      "表面在优化页面，实际在偷偷调整每一个像素的呼吸感。",
+      "我不是拖延，我是在等待一个能让我突然进入状态的瞬间。",
+      "如果一个数据不能说明“我是谁”，那它在这页里就不够资格出现。",
+      "今天努力了吗？努力了，但中途也认真发了会儿呆。",
+      "模型 Loss 还没收敛，我的肌肉记忆倒是先在钢琴键上收敛了。",
+      "今天的系统增益调得刚刚好，连发呆都散发着一种临界稳定的美感。",
+      "作为 ENFJ，今天也在努力破冰，并试图用真诚装满每一个冷场瞬间。",
+      "学术写作的 tone 可以冷静克制，但生活总得过得像七十二滚拂一样热烈。",
+      "服务器在跑着图遗忘（Unlearning），而我正在努力忘记下午刚吃掉的卡路里。",
+      "与其在deadline前高频震荡，不如退一步做个完美的过阻尼系统。",
+      "我不是拖延，我是在等待一个能让我突然进入状态的‘状态空间方程’。"
+    ];
+
+    // 可编辑：抽签彩蛋文案
+    const FORTUNES = [
+      "今日状态：适合把最难的一件事先做掉，然后奖励自己去听歌。",
+      "今日状态：脑子很散，但灵感会在你开始动手之后回来。",
+      "今日状态：适合做整理、归纳、排版，顺便把心情也摆整齐。",
+      "今日状态：如果想摸鱼，请摸得有风格一点。",
+      "今日状态：你离一个让自己满意的小成果，可能只差 25 分钟专注。 ",
+      "今日状态：适合把最难的一件事先做掉，然后奖励自己一顿好吃的和几首好歌。",
+      "今日状态：脑子现在有点散，但别慌，灵感往往会在你敲下第一个字后自己回来。",
+      "今日状态：适合做整理、归纳和排版，顺便把最近乱糟糟的心情也摆整齐。",
+      "今日状态：如果今天实在想摸鱼，也请摸得有风格、有品位一点。",
+      "今日状态：满电复活！今天适合去见朋友、聊聊天，或者把积攒了很久的有趣想法付诸行动。",
+      "今日状态：宜听歌、放空、看窗外。既然高频转了这么久，今天就允许自己当个偶尔卡顿的无害人类吧。",
+      "今日状态：接收到来自未来的积极信号！今天做的某件不起眼的小事，正在偷偷给后面埋下惊喜。"
+    ];
+
+    const TRAVEL_PHOTOS = {
+      "2026_05_苏州": ["./images/travel/2026_05_苏州/IMG_20260517_185452.jpg", "./images/travel/2026_05_苏州/IMG_20260517_191636.jpg", "./images/travel/2026_05_苏州/IMG_20260517_192457.jpg", "./images/travel/2026_05_苏州/IMG_20260517_192533.jpg", "./images/travel/2026_05_苏州/IMG_20260517_193524.jpg", "./images/travel/2026_05_苏州/IMG_20260517_193708.jpg", "./images/travel/2026_05_苏州/IMG_20260517_193736.jpg", "./images/travel/2026_05_苏州/IMG_20260517_195009.jpg", "./images/travel/2026_05_苏州/IMG_20260517_201447.jpg", "./images/travel/2026_05_苏州/IMG_20260517_202008.jpg", "./images/travel/2026_05_苏州/IMG_20260517_204416.jpg", "./images/travel/2026_05_苏州/IMG_20260517_211012.jpg", "./images/travel/2026_05_苏州/IMG_20260517_214826.jpg", "./images/travel/2026_05_苏州/IMG_20260517_215314.jpg", "./images/travel/2026_05_苏州/MEITU_20260517_163803756.jpg", "./images/travel/2026_05_苏州/mmexport1779007104585.jpg", "./images/travel/2026_05_苏州/mmexport1779007472677.jpg", "./images/travel/2026_05_苏州/mmexport1779012105636.jpg", "./images/travel/2026_05_苏州/mmexport1779012114156.jpg", "./images/travel/2026_05_苏州/mmexport1779029947530.jpg", "./images/travel/2026_05_苏州/MYXJ_20260517181158671_fast.jpg", "./images/travel/2026_05_苏州/MYXJ_20260517185521037_fast.jpg"],
+      "2026_05_徐州济南": ["./images/travel/2026_05_徐州济南/IMG_20260430_143948.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_152133.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_163412.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_163527.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_173723.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_174542.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_180456.jpg", "./images/travel/2026_05_徐州济南/IMG_20260430_212129.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_152909.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_153533.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_154030.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_155500.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_164113.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_170332.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_180128.jpg", "./images/travel/2026_05_徐州济南/IMG_20260501_203438.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_150922.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_161531_edit_1140131781910464.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_163718.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_171719.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_182625.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_183807.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_184202.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_191020.jpg", "./images/travel/2026_05_徐州济南/IMG_20260502_203135.jpg", "./images/travel/2026_05_徐州济南/IMG_20260503_192043.jpg", "./images/travel/2026_05_徐州济南/MYXJ_20260501174944335_fast.jpg", "./images/travel/2026_05_徐州济南/MYXJ_20260503174142179_fast.jpg"],
+      "2025_12_北京天津": ["./images/travel/2025_12_北京天津/1766572283848.jpg", "./images/travel/2025_12_北京天津/IMG_20251224_145920.jpg", "./images/travel/2025_12_北京天津/IMG_20251224_150227.jpg", "./images/travel/2025_12_北京天津/IMG_20251224_170030.jpg", "./images/travel/2025_12_北京天津/IMG_20251224_170143_edit_129066406873289.jpg", "./images/travel/2025_12_北京天津/IMG_20251225_215605.jpg", "./images/travel/2025_12_北京天津/IMG_20251228_135153.jpg"],
+      "2025_11_南京": ["./images/travel/2025_11_南京/IMG_20251127_165702.jpg", "./images/travel/2025_11_南京/IMG_20251127_180231.jpg", "./images/travel/2025_11_南京/IMG_20251128_094309.jpg", "./images/travel/2025_11_南京/IMG_20251128_101108.jpg", "./images/travel/2025_11_南京/IMG_20251128_102110.jpg", "./images/travel/2025_11_南京/IMG_20251128_102446.jpg", "./images/travel/2025_11_南京/IMG_20251128_104420_edit_340455013978409.jpg", "./images/travel/2025_11_南京/IMG_20251128_105103.jpg", "./images/travel/2025_11_南京/IMG_20251128_105923.jpg", "./images/travel/2025_11_南京/IMG_20251128_111133.jpg", "./images/travel/2025_11_南京/IMG_20251128_112548.jpg", "./images/travel/2025_11_南京/IMG_20251128_113253_1.jpg", "./images/travel/2025_11_南京/IMG_20251128_113712.jpg", "./images/travel/2025_11_南京/IMG_20251128_114806.jpg", "./images/travel/2025_11_南京/IMG_20251128_120805.jpg", "./images/travel/2025_11_南京/IMG_20251128_121438.jpg", "./images/travel/2025_11_南京/IMG_20251128_133751.jpg", "./images/travel/2025_11_南京/IMG_20251128_140537.jpg", "./images/travel/2025_11_南京/IMG_20251128_141021.jpg", "./images/travel/2025_11_南京/IMG_20251128_145126.jpg", "./images/travel/2025_11_南京/IMG_20251128_163452.jpg", "./images/travel/2025_11_南京/IMG_20251128_173838.jpg", "./images/travel/2025_11_南京/IMG_20251128_203748.jpg", "./images/travel/2025_11_南京/IMG_20251129_112343.jpg", "./images/travel/2025_11_南京/IMG_20251129_113415.jpg", "./images/travel/2025_11_南京/IMG_20251129_114720.jpg", "./images/travel/2025_11_南京/IMG_20251129_122011.jpg", "./images/travel/2025_11_南京/IMG_20251129_131051_edit_378176483442652.jpg", "./images/travel/2025_11_南京/IMG_20251129_135821.jpg", "./images/travel/2025_11_南京/IMG_20251129_140003.jpg", "./images/travel/2025_11_南京/IMG_20251129_152243.jpg", "./images/travel/2025_11_南京/IMG_20251129_161005.jpg", "./images/travel/2025_11_南京/IMG_20251129_161010.jpg", "./images/travel/2025_11_南京/IMG_20251129_223253.jpg", "./images/travel/2025_11_南京/IMG_20251130_132716.jpg", "./images/travel/2025_11_南京/IMG_20251130_133657.jpg", "./images/travel/2025_11_南京/IMG_20251130_135655.jpg", "./images/travel/2025_11_南京/IMG_20251130_145202.jpg", "./images/travel/2025_11_南京/MEITU_20251201_001054205.jpg", "./images/travel/2025_11_南京/MEITU_20251201_001632519.jpg", "./images/travel/2025_11_南京/MEITU_20251201_002119874.jpg", "./images/travel/2025_11_南京/MEITU_20251201_002344512.jpg", "./images/travel/2025_11_南京/MEITU_20251201_002611909.jpg", "./images/travel/2025_11_南京/MEITU_20251201_003133855.jpg", "./images/travel/2025_11_南京/MEITU_20251201_004003183.jpg", "./images/travel/2025_11_南京/MEITU_20251201_005101226.jpg", "./images/travel/2025_11_南京/MEITU_20251201_005534657.jpg", "./images/travel/2025_11_南京/MEITU_20251201_010423494.jpg", "./images/travel/2025_11_南京/mmexport1764152172947.jpg", "./images/travel/2025_11_南京/mmexport1764492879855.jpg", "./images/travel/2025_11_南京/mmexport1764518458472_edit_455798454744051.jpg", "./images/travel/2025_11_南京/MYXJ_20251128093202305_fast.jpg", "./images/travel/2025_11_南京/MYXJ_20251129113751376_fast.jpg", "./images/travel/2025_11_南京/MYXJ_20251129113758935_fast.jpg"],
+      "2025_08_台州": ["./images/travel/2025_08_台州/IMG_20250812_164004.jpg", "./images/travel/2025_08_台州/IMG_20250812_165817.jpg", "./images/travel/2025_08_台州/IMG_20250812_170525_edit_257851050773041.jpg", "./images/travel/2025_08_台州/IMG_20250812_171601.jpg", "./images/travel/2025_08_台州/IMG_20250812_181801.jpg", "./images/travel/2025_08_台州/IMG_20250812_184948_edit_263957850084774.jpg", "./images/travel/2025_08_台州/IMG_20250812_192843.jpg", "./images/travel/2025_08_台州/IMG_20250813_122948.jpg", "./images/travel/2025_08_台州/IMG_20250813_145150.jpg", "./images/travel/2025_08_台州/IMG_20250813_154810.jpg", "./images/travel/2025_08_台州/IMG_20250813_155146.jpg", "./images/travel/2025_08_台州/IMG_20250813_160028.jpg", "./images/travel/2025_08_台州/IMG_20250813_162145.jpg", "./images/travel/2025_08_台州/IMG_20250813_162617.jpg", "./images/travel/2025_08_台州/IMG_20250813_164813.jpg", "./images/travel/2025_08_台州/IMG_20250813_165817.jpg", "./images/travel/2025_08_台州/IMG_20250813_170114_edit_37952830296562.jpg", "./images/travel/2025_08_台州/IMG_20250813_173955.jpg", "./images/travel/2025_08_台州/IMG_20250813_183218.jpg", "./images/travel/2025_08_台州/IMG_20250814_122115.jpg", "./images/travel/2025_08_台州/IMG_20250815_091218.jpg", "./images/travel/2025_08_台州/IMG_20250815_094629.jpg", "./images/travel/2025_08_台州/IMG_20250815_101711.jpg", "./images/travel/2025_08_台州/MEITU_20250813_185428289.jpg"],
+      "2025_07_如皋": ["./images/travel/2025_07_如皋/12.jpg", "./images/travel/2025_07_如皋/14.jpg", "./images/travel/2025_07_如皋/2.jpg", "./images/travel/2025_07_如皋/5.jpg", "./images/travel/2025_07_如皋/9.jpg", "./images/travel/2025_07_如皋/IMG_20250731_160044.jpg", "./images/travel/2025_07_如皋/mmexport1754135413428_edit_541219979778433.jpg", "./images/travel/2025_07_如皋/mmexport1754137509800.jpg", "./images/travel/2025_07_如皋/mmexport1754137806064_edit_543583521920917.jpg", "./images/travel/2025_07_如皋/MYXJ_20250731135234524_fast.jpg", "./images/travel/2025_07_如皋/创智 5.jpg", "./images/travel/2025_07_如皋/创智 8.jpg", "./images/travel/2025_07_如皋/梦百合 3.jpg", "./images/travel/2025_07_如皋/授牌.jpg"],
+      "2025_07_杭州": ["./images/travel/2025_07_杭州/concert1.jpg", "./images/travel/2025_07_杭州/concert2.jpg", "./images/travel/2025_07_杭州/concert3.jpg", "./images/travel/2025_07_杭州/concert4.jpg", "./images/travel/2025_07_杭州/concert5.jpg", "./images/travel/2025_07_杭州/concert6.jpg", "./images/travel/2025_07_杭州/IMG_20250704_181745.jpg", "./images/travel/2025_07_杭州/IMG_20250704_185052.jpg", "./images/travel/2025_07_杭州/IMG_20250704_192507.jpg", "./images/travel/2025_07_杭州/IMG_20250704_192643.jpg", "./images/travel/2025_07_杭州/IMG_20250704_193817.jpg", "./images/travel/2025_07_杭州/IMG_20250705_101456.jpg", "./images/travel/2025_07_杭州/IMG_20250705_140537.jpg", "./images/travel/2025_07_杭州/IMG_20250705_184117.jpg", "./images/travel/2025_07_杭州/IMG_20250705_184144_edit_93357509635532.jpg", "./images/travel/2025_07_杭州/mmexport1751629759018.jpg", "./images/travel/2025_07_杭州/MYXJ_20250704191427605_fast.jpg", "./images/travel/2025_07_杭州/MYXJ_20250704194106030_fast.jpg"],
+      "2025_05_银川中卫": ["./images/travel/2025_05_银川中卫/IMG_20250503_211135.jpg", "./images/travel/2025_05_银川中卫/IMG_20250503_211248.jpg", "./images/travel/2025_05_银川中卫/IMG_20250504_120254.jpg", "./images/travel/2025_05_银川中卫/IMG_20250504_124525.jpg", "./images/travel/2025_05_银川中卫/IMG_20250504_161657.jpg", "./images/travel/2025_05_银川中卫/IMG_20250504_161743.jpg", "./images/travel/2025_05_银川中卫/IMG_20250504_163506.jpg", "./images/travel/2025_05_银川中卫/IMG_20250504_164736.jpg", "./images/travel/2025_05_银川中卫/IMG_20250505_122526.jpg", "./images/travel/2025_05_银川中卫/IMG_20250505_143327.jpg", "./images/travel/2025_05_银川中卫/IMG_20250505_210226.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_084824.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_105215.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_110804.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_110843.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_111118_3.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_114705_edit_160611153614979.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_121425_edit_160464880912951.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_131421.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_150029.jpg", "./images/travel/2025_05_银川中卫/IMG_20250506_165147.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_141747439.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_141900485.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_142035155.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_142435842.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_175640252.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_180008524.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250504_180129350.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250505_153348371.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250505_153520838.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250505_154150151.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250505_154822708.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250505_155302901.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250506_115417561.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250506_115539140.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250506_120025216_edit_160405957569328.jpg", "./images/travel/2025_05_银川中卫/MEITU_20250507_193725810.jpg", "./images/travel/2025_05_银川中卫/mmexport1746430625498.jpg", "./images/travel/2025_05_银川中卫/mmexport1746430653180.jpg", "./images/travel/2025_05_银川中卫/mmexport1746516835540_edit_6167669177386.jpg", "./images/travel/2025_05_银川中卫/mmexport1746516843875.jpg", "./images/travel/2025_05_银川中卫/mmexport1746524718024.jpg", "./images/travel/2025_05_银川中卫/mmexport1746595895127.jpg", "./images/travel/2025_05_银川中卫/MYXJ_20250504111859297_fast.jpg", "./images/travel/2025_05_银川中卫/MYXJ_20250506092719440_fast.jpg"],
+      "2025_04_温州": ["./images/travel/2025_04_温州/IMG_20250404_153438.jpg", "./images/travel/2025_04_温州/IMG_20250404_155339.jpg", "./images/travel/2025_04_温州/IMG_20250404_155353.jpg", "./images/travel/2025_04_温州/IMG_20250404_174332.jpg", "./images/travel/2025_04_温州/IMG_20250404_231248.jpg", "./images/travel/2025_04_温州/IMG_20250405_095250.jpg", "./images/travel/2025_04_温州/IMG_20250405_114231.jpg", "./images/travel/2025_04_温州/IMG_20250405_120142.jpg", "./images/travel/2025_04_温州/IMG_20250405_163709.jpg", "./images/travel/2025_04_温州/IMG_20250405_165429.jpg", "./images/travel/2025_04_温州/IMG_20250405_165546.jpg", "./images/travel/2025_04_温州/IMG_20250405_170705.jpg", "./images/travel/2025_04_温州/IMG_20250405_172220.jpg", "./images/travel/2025_04_温州/IMG_20250405_174544.jpg", "./images/travel/2025_04_温州/IMG_20250405_204220.jpg", "./images/travel/2025_04_温州/mmexport1743754562274.jpg", "./images/travel/2025_04_温州/mmexport1743817505276.jpg", "./images/travel/2025_04_温州/mmexport1743863562744.jpg", "./images/travel/2025_04_温州/mmexport1743863565177.jpg"],
+      "2025_03_北京": ["./images/travel/2025_03_北京/IMG_20250306_121639.jpg", "./images/travel/2025_03_北京/IMG_20250306_150829.jpg", "./images/travel/2025_03_北京/IMG_20250306_153629.jpg", "./images/travel/2025_03_北京/IMG_20250306_154136.jpg", "./images/travel/2025_03_北京/IMG_20250306_160154.jpg", "./images/travel/2025_03_北京/IMG_20250306_161708.jpg", "./images/travel/2025_03_北京/IMG_20250306_233242.jpg", "./images/travel/2025_03_北京/mmexport1741272115783.jpg", "./images/travel/2025_03_北京/mmexport1741275815223.jpg"],
+      "2025_01_大理": ["./images/travel/2025_01_大理/IMG_20250119_075044.jpg", "./images/travel/2025_01_大理/IMG_20250119_080543.jpg", "./images/travel/2025_01_大理/IMG_20250119_080638.jpg", "./images/travel/2025_01_大理/IMG_20250119_081108.jpg", "./images/travel/2025_01_大理/IMG_20250120_103434.jpg", "./images/travel/2025_01_大理/IMG_20250120_103443.jpg", "./images/travel/2025_01_大理/IMG_20250120_104615.jpg", "./images/travel/2025_01_大理/IMG_20250120_104744.jpg", "./images/travel/2025_01_大理/IMG_20250121_103053.jpg", "./images/travel/2025_01_大理/IMG_20250121_181606.jpg", "./images/travel/2025_01_大理/IMG_20250121_225013.jpg", "./images/travel/2025_01_大理/mmexport1737245631608.jpg", "./images/travel/2025_01_大理/mmexport1737246135945.jpg", "./images/travel/2025_01_大理/mmexport1737263396264.jpg", "./images/travel/2025_01_大理/mmexport1737283318054.jpg", "./images/travel/2025_01_大理/mmexport1737293097270.jpg", "./images/travel/2025_01_大理/mmexport1737349496521.jpg", "./images/travel/2025_01_大理/mmexport1737438558469.jpg", "./images/travel/2025_01_大理/mmexport1737445005159.jpg", "./images/travel/2025_01_大理/mmexport1737452648305.jpg", "./images/travel/2025_01_大理/mmexport1737471219388.jpg", "./images/travel/2025_01_大理/mmexport1737476142436.jpg", "./images/travel/2025_01_大理/mmexport1737499778859.jpg", "./images/travel/2025_01_大理/mmexport1737506391957.jpg", "./images/travel/2025_01_大理/mmexport1737506422337.jpg", "./images/travel/2025_01_大理/mmexport1737506427049.jpg", "./images/travel/2025_01_大理/mmexport1737522220058.jpg", "./images/travel/2025_01_大理/mmexport407b6b17a15c17f110168014422ac1cb_1737382393916.jpeg", "./images/travel/2025_01_大理/mmexport5806d68847eec116ff70dc02fe1feeed_1737382411194.jpeg", "./images/travel/2025_01_大理/MYXJ_20250120093951697_fast.jpg"],
+      "2024_07_赣州": ["./images/travel/2024_07_赣州/IMG_20240724_180400.jpg", "./images/travel/2024_07_赣州/IMG_20240725_161357.jpg", "./images/travel/2024_07_赣州/IMG_20240725_174705.jpg", "./images/travel/2024_07_赣州/IMG_20240726_163545.jpg", "./images/travel/2024_07_赣州/IMG_20240728_163956.jpg", "./images/travel/2024_07_赣州/IMG_20240729_172246.jpg", "./images/travel/2024_07_赣州/IMG_20240730_102706.jpg", "./images/travel/2024_07_赣州/IMG_20240730_184159.jpg", "./images/travel/2024_07_赣州/mmexport1721983798301.jpg", "./images/travel/2024_07_赣州/mmexport1722095210254.jpg", "./images/travel/2024_07_赣州/mmexport1722152269946.jpg", "./images/travel/2024_07_赣州/mmexport1722258749230.jpg", "./images/travel/2024_07_赣州/MYXJ_20240728153504655_fast.jpg", "./images/travel/2024_07_赣州/MYXJ_20240729211033926_fast.jpg", "./images/travel/2024_07_赣州/MYXJ_20240730092133695_fast.jpg", "./images/travel/2024_07_赣州/MYXJ_20240730093043791_fast.jpg", "./images/travel/2024_07_赣州/MYXJ_20240730112949171_fast.jpg"],
+      "2024_06_乌镇杭州": ["./images/travel/2024_06_乌镇杭州/IMG_20240628_215637.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240628_215852(1).jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240628_220119.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240628_222402.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240629_120413.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240629_121256.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_101229.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_112337.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_112730.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_125813.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_152410_733396864481583.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_152710.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_155123.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_155647.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_180927.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_181737.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_181911.jpg", "./images/travel/2024_06_乌镇杭州/IMG_20240630_181933.jpg", "./images/travel/2024_06_乌镇杭州/mmexport1719630550915.jpg", "./images/travel/2024_06_乌镇杭州/mmexport1719643302547.jpg", "./images/travel/2024_06_乌镇杭州/mmexport1719643307607.jpg", "./images/travel/2024_06_乌镇杭州/mmexport1719669879460.png", "./images/travel/2024_06_乌镇杭州/mmexport1719669901413.png", "./images/travel/2024_06_乌镇杭州/mmexport1719669939427.png", "./images/travel/2024_06_乌镇杭州/mmexport1719676548978.png", "./images/travel/2024_06_乌镇杭州/mmexport1719716877128.jpg"],
+      "2024_05_青岛": ["./images/travel/2024_05_青岛/IMG_20240503_102845.jpg", "./images/travel/2024_05_青岛/IMG_20240503_103939.jpg", "./images/travel/2024_05_青岛/IMG_20240503_113348.jpg", "./images/travel/2024_05_青岛/IMG_20240503_170418.jpg", "./images/travel/2024_05_青岛/IMG_20240504_135133.jpg", "./images/travel/2024_05_青岛/IMG_20240504_162147.jpg", "./images/travel/2024_05_青岛/mmexport1714741045056.jpg", "./images/travel/2024_05_青岛/mmexport1714741483131.jpg", "./images/travel/2024_05_青岛/mmexport1714741500941.jpg", "./images/travel/2024_05_青岛/mmexport1714741527067.jpg", "./images/travel/2024_05_青岛/mmexport1714741543496.jpg", "./images/travel/2024_05_青岛/mmexport1714793691976.jpg", "./images/travel/2024_05_青岛/mmexport1714882324374.jpg", "./images/travel/2024_05_青岛/retouch_2024050322293050.jpg", "./images/travel/2024_05_青岛/retouch_2024050512174465.jpg"],
+      "2024_01_北京": ["./images/travel/2024_01_北京/IMG_20240112_174819.jpg", "./images/travel/2024_01_北京/IMG_20240113_111051.jpg", "./images/travel/2024_01_北京/IMG_20240113_155830.jpg", "./images/travel/2024_01_北京/IMG_20240114_114815.jpg", "./images/travel/2024_01_北京/IMG_20240114_131611.jpg", "./images/travel/2024_01_北京/IMG_20240114_211309.jpg", "./images/travel/2024_01_北京/IMG_20240115_195401.jpg", "./images/travel/2024_01_北京/mmexport1705196688784.jpg", "./images/travel/2024_01_北京/mmexport1705214230817.jpg", "./images/travel/2024_01_北京/mmexport1705401814421.jpg", "./images/travel/2024_01_北京/MYXJ_20240118201657001_save.jpg"],
+      "2023_07_苏州": ["./images/travel/2023_07_苏州/IMG_20230706_103721.jpg", "./images/travel/2023_07_苏州/IMG_20230706_205435.jpg", "./images/travel/2023_07_苏州/mmexport1688648249462.jpg", "./images/travel/2023_07_苏州/mmexport1688648668591.jpg", "./images/travel/2023_07_苏州/mmexport1688648846870.jpg", "./images/travel/2023_07_苏州/mmexport1688650458632.jpg"]
+    };
+
+    const GUESTBOOK_STORAGE_KEY = "tiny-data-cafe-guestbook";
+    const GUESTBOOK_MAX_MESSAGES = 36;
+    const GUESTBOOK_SEED_MESSAGES = [
+      { id: "seed-1", name: "路过的朋友", text: "祝你今天也有一点点被生活偏爱的时刻。", time: "初始留言" },
+      { id: "seed-2", name: "匿名同学", text: "这个小馆真的很有温度，愿你一直热烈也一直自由。", time: "初始留言" },
+      { id: "seed-3", name: "未来的自己", text: "别怕慢一点，认真长出来的东西都会很好看。", time: "初始留言" }
+    ];
+
+    const themeToggle = document.getElementById("themeToggle");
+    const avatarButton = document.getElementById("avatarButton");
+    const quoteText = document.getElementById("quoteText");
+    const quoteBubble = document.getElementById("quoteBubble");
+    const profileLine = document.getElementById("profileLine");
+    const profileStats = document.getElementById("profileStats");
+    const memoryCloud = document.getElementById("memoryCloud");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroDescription = document.getElementById("heroDescription");
+    const heroTags = document.getElementById("heroTags");
+    const heroFacts = document.getElementById("heroFacts");
+    const dataOverviewGrid = document.getElementById("dataOverviewGrid");
+    const dataDetailShell = document.getElementById("dataDetailShell");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailDescription = document.getElementById("detailDescription");
+    const detailPanel = document.getElementById("detailPanel");
+    const detailBackButton = document.getElementById("detailBackButton");
+    const stageTrack = document.getElementById("stageTrack");
+    const stagePanels = Array.from(document.querySelectorAll(".stage-panel"));
+    const panelSwitchButtons = Array.from(document.querySelectorAll("[data-panel-target]"));
+    const navPanelButtons = Array.from(document.querySelectorAll(".nav-panel-btn"));
+    const fortuneButton = document.getElementById("fortuneButton");
+    const fortuneText = document.getElementById("fortuneText");
+    const fortuneCard = document.getElementById("fortuneCard");
+    const sparkBox = document.getElementById("sparkBox");
+    const danmuLayer = document.getElementById("danmuLayer");
+    const guestbookForm = document.getElementById("guestbookForm");
+    const guestNameInput = document.getElementById("guestNameInput");
+    const guestMessageInput = document.getElementById("guestMessageInput");
+    const guestbookFeed = document.getElementById("guestbookFeed");
+    const fireworksButton = document.getElementById("fireworksButton");
+    const heartBurstButton = document.getElementById("heartBurstButton");
+    const cheerBurstButton = document.getElementById("cheerBurstButton");
+    const shuffleDanmuButton = document.getElementById("shuffleDanmuButton");
+
+    let quoteIndex = 0;
+    let fortuneIndex = -1;
+    let currentPanel = "home";
+    let currentDetailId = null;
+    let cityLogTimer = null;
+    let cityLogRaf = null;
+    let cityLogOffset = 0;
+    let cityLogSavedOffset = 0;
+    let cityLogResumeTimeout = null;
+    let isCityLogUserControlling = false;
+    let chinaMapChart = null;
+    let guestbookMessages = [];
+
+    function renderProfile() {
+      heroTitle.textContent = PROFILE.heroTitle;
+      heroDescription.textContent = PROFILE.heroDescription;
+      profileLine.textContent = `昵称：${PROFILE.nickname} | 专业：${PROFILE.major} | 年级：${PROFILE.grade}`;
+
+      heroTags.innerHTML = "";
+      PROFILE.tags.forEach((tag) => {
+        const item = document.createElement("span");
+        item.className = "tag";
+        item.textContent = tag;
+        heroTags.appendChild(item);
+      });
+
+      heroFacts.innerHTML = "";
+      PROFILE.facts.forEach((fact) => {
+        const item = document.createElement("span");
+        item.className = "fact-chip";
+        item.textContent = fact;
+        heroFacts.appendChild(item);
+      });
+
+      memoryCloud.innerHTML = "";
+      const wordTones = [
+        {
+          background: "rgba(255, 248, 241, 0.78)",
+          border: "rgba(196, 111, 79, 0.22)",
+          color: "rgba(112, 62, 42, 0.96)",
+          opacity: "0.98"
+        },
+        {
+          background: "rgba(243, 229, 214, 0.72)",
+          border: "rgba(196, 111, 79, 0.18)",
+          color: "rgba(133, 78, 58, 0.92)",
+          opacity: "0.9"
+        },
+        {
+          background: "rgba(249, 241, 234, 0.62)",
+          border: "rgba(196, 111, 79, 0.14)",
+          color: "rgba(145, 88, 64, 0.8)",
+          opacity: "0.8"
+        },
+        {
+          background: "rgba(255, 250, 246, 0.58)",
+          border: "rgba(196, 111, 79, 0.12)",
+          color: "rgba(120, 76, 58, 0.72)",
+          opacity: "0.74"
+        }
+      ];
+
+      PROFILE.memoryCloud.forEach((item, index) => {
+        const chip = document.createElement("span");
+        chip.className = "word-chip";
+        chip.textContent = item.text;
+        chip.style.fontSize = `${item.size || 1}rem`;
+        chip.style.left = `${item.x ?? ((index * 11) % 72) + 6}%`;
+        chip.style.top = `${item.y ?? ((index * 13) % 70) + 8}%`;
+        chip.style.transform = `rotate(${item.rotate || 0}deg)`;
+        chip.style.padding = (item.size || 1) >= 1.32 ? "12px 22px" : (item.size || 1) <= 1.1 ? "8px 14px" : "10px 18px";
+
+        const tone = wordTones[item.tone ?? (index % wordTones.length)];
+        chip.style.background = tone.background;
+        chip.style.borderColor = tone.border;
+        chip.style.color = tone.color;
+        chip.style.opacity = tone.opacity;
+
+        memoryCloud.appendChild(chip);
+      });
+
+      profileStats.innerHTML = "";
+      PROFILE.stats.forEach((stat) => {
+        const tile = document.createElement("div");
+        tile.className = "stat-tile";
+        tile.innerHTML = `<strong>${stat.value}</strong><span>${stat.label}</span>`;
+        profileStats.appendChild(tile);
+      });
+    }
+
+    function makeBarRow(label, value, maxValue) {
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      const safePercent = Math.max(0, Math.min(100, (value / maxValue) * 100));
+      row.innerHTML = `
+        <span class="bar-label">${label}</span>
+        <div class="bar-track" aria-hidden="true">
+          <div class="bar-fill" data-width="${safePercent.toFixed(1)}%"></div>
+        </div>
+        <span class="bar-value">${value}</span>
+      `;
+      return row;
+    }
+
+    function animateBars(root) {
+      const fills = root.querySelectorAll(".bar-fill");
+      fills.forEach((fill, index) => {
+        setTimeout(() => {
+          fill.style.width = fill.dataset.width;
+        }, 100 + index * 90);
+      });
+    }
+
+    function renderOverviewCards() {
+      dataOverviewGrid.innerHTML = "";
+      DATA_GALLERY.overviewCards.forEach((card) => {
+        const button = document.createElement("button");
+        button.className = "data-overview-card";
+        button.type = "button";
+        button.dataset.detailId = card.id;
+        button.setAttribute("aria-label", `打开${card.title}详情`);
+        button.innerHTML = `
+          <span class="card-kicker">${card.kicker}</span>
+          <strong>${card.title}</strong>
+          <span>${card.summary}</span>
+        `;
+        button.addEventListener("click", () => openDetail(card.id));
+        dataOverviewGrid.appendChild(button);
+      });
+    }
+
+    function renderTimelineDetail(data) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "timeline-layout";
+
+      const left = document.createElement("div");
+      left.className = "timeline-list";
+      data.items.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "timeline-item";
+        card.innerHTML = `<strong>${item.time} · ${item.title}</strong><span>${item.note}</span>`;
+        left.appendChild(card);
+      });
+
+      const right = document.createElement("div");
+      right.className = "mini-card";
+      right.innerHTML = `<h3>${data.rightTitle}</h3><p>${data.summary}</p>`;
+      if (data.contactCards && data.contactCards.length) {
+        const stack = document.createElement("div");
+        stack.className = "link-stack";
+        data.contactCards.forEach((card) => {
+          const item = document.createElement("div");
+          item.className = "link-card";
+          item.innerHTML = `<strong>${card.title}</strong><span>${card.html}</span>`;
+          stack.appendChild(item);
+        });
+        right.appendChild(stack);
+      } else {
+        const list = document.createElement("div");
+        list.className = "data-list";
+        data.highlights.forEach((text) => {
+          const item = document.createElement("div");
+          item.className = "data-item";
+          item.innerHTML = `<strong>提示</strong><span>${text}</span>`;
+          list.appendChild(item);
+        });
+        right.appendChild(list);
+      }
+
+      wrapper.appendChild(left);
+      wrapper.appendChild(right);
+      return wrapper;
+    }
+
+    function renderMusicDetail(data) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "music-layout";
+
+      const left = document.createElement("div");
+      left.className = "rank-list";
+      data.topTracks.forEach((track) => {
+        const row = document.createElement("article");
+        row.className = "rank-item";
+        const coverHtml = track.cover
+          ? `<div class="album-cover"><img src="${track.cover}" alt="${track.song} 专辑封面"></div>`
+          : `<div class="album-cover">专辑封面</div>`;
+        row.innerHTML = `
+          <div class="rank-no">#${track.rank}</div>
+          ${coverHtml}
+          <div class="rank-meta">
+            <strong>${track.song} · ${track.artist}</strong>
+            <span>${track.note}</span>
+          </div>
+          <div class="rank-score">${track.score}</div>
+        `;
+        left.appendChild(row);
+      });
+
+      const right = document.createElement("div");
+      right.className = "detail-panel";
+      right.innerHTML = `
+        <div class="city-side-card">
+          <strong>我最喜欢的歌手</strong>
+          <span>${data.favorites.singer}</span>
+        </div>
+        <div class="city-side-card">
+          <strong>听歌风格</strong>
+          <span>${data.favorites.mood}</span>
+        </div>
+        <div class="city-side-card">
+          <strong>最常听歌的时段</strong>
+          <span>${data.favorites.moment}</span>
+        </div>
+      `;
+      const tagCloud = document.createElement("div");
+      tagCloud.className = "city-side-card";
+      tagCloud.innerHTML = `<strong>风格标签</strong>`;
+      const cloud = document.createElement("div");
+      cloud.className = "tag-cloud";
+      data.genres.forEach((genre) => {
+        const tag = document.createElement("span");
+        tag.textContent = genre;
+        cloud.appendChild(tag);
+      });
+      tagCloud.appendChild(cloud);
+      right.appendChild(tagCloud);
+
+      wrapper.appendChild(left);
+      wrapper.appendChild(right);
+      return wrapper;
+    }
+
+    function renderDramaDetail(data) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "detail-panel";
+
+      const hint = document.createElement("p");
+      hint.className = "overview-note";
+      hint.textContent = data.hint;
+      wrapper.appendChild(hint);
+
+      const slider = document.createElement("div");
+      slider.className = "drama-slider";
+      data.items.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "drama-card";
+        card.innerHTML = `
+          <strong>${item.name}</strong>
+          <span>${item.year}</span>
+          <p>${item.comment}</p>
+        `;
+        const badges = document.createElement("div");
+        badges.className = "drama-badges";
+        item.tags.forEach((tag) => {
+          const chip = document.createElement("span");
+          chip.textContent = tag;
+          badges.appendChild(chip);
+        });
+        card.appendChild(badges);
+        slider.appendChild(card);
+      });
+      wrapper.appendChild(slider);
+      return wrapper;
+    }
+
+    function createCityLogItem(log) {
+      const item = document.createElement("article");
+      item.className = "city-note-item";
+      item.setAttribute("role", "button");
+      item.setAttribute("tabindex", "0");
+      item.innerHTML = `<strong>${log.time} · ${log.place}</strong><span>${log.note}</span>`;
+      item.addEventListener("click", () => openCityGallery(log));
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openCityGallery(log);
+        }
+      });
+      return item;
+    }
+
+    function renderCitiesDetail(data) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "city-layout";
+      wrapper.style.position = "relative";
+
+      const mapCard = document.createElement("div");
+      mapCard.className = "map-card";
+      mapCard.innerHTML = `
+        <div class="map-container">
+          <h3 class="map-title">足迹拓扑地图</h3>
+          <div id="echartsChinaMap" style="width: 100%; height: 470px; margin: 0 auto;"></div>
+          <div id="mapTooltip" class="map-tooltip">地图支持悬停查看省份，涟漪点标记核心足迹。</div>
+        </div>
+      `;
+
+      const caption = document.createElement("p");
+      caption.className = "map-caption";
+      caption.textContent = data.caption;
+      mapCard.appendChild(caption);
+
+      const logWrap = document.createElement("div");
+      logWrap.className = "city-log";
+      const createLogTrack = () => {
+        const track = document.createElement("div");
+        track.className = "city-log-track";
+        data.logs.forEach((log) => {
+          track.appendChild(createCityLogItem(log));
+        });
+        return track;
+      };
+      const list = createLogTrack();
+      const clone = createLogTrack();
+      logWrap.appendChild(list);
+      logWrap.appendChild(clone);
+      setupCityLogWheelControl(logWrap);
+
+      const galleryOverlay = document.createElement("div");
+      galleryOverlay.className = "city-gallery-overlay";
+      galleryOverlay.id = "cityGalleryOverlay";
+      galleryOverlay.innerHTML = `
+        <div class="city-gallery-head">
+          <div>
+            <strong id="cityGalleryTitle">旅行照片墙</strong>
+            <p class="city-gallery-meta" id="cityGalleryMeta">点击右侧的旅行记录，就能在这里展开对应城市的照片。</p>
+          </div>
+          <button class="back-btn" id="cityGalleryCloseButton" type="button">返回日志</button>
+        </div>
+        <div class="city-gallery-grid" id="cityGalleryGrid"></div>
+      `;
+      galleryOverlay.querySelector("#cityGalleryCloseButton").addEventListener("click", closeCityGallery);
+
+      wrapper.appendChild(mapCard);
+      wrapper.appendChild(logWrap);
+      wrapper.appendChild(galleryOverlay);
+      return wrapper;
+    }
+
+    function renderMbtiDetail(data) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "detail-panel";
+
+      const topLayout = document.createElement("div");
+      topLayout.className = "mbti-layout";
+
+      const left = document.createElement("div");
+      left.className = "detail-panel";
+      left.innerHTML = `
+        <div class="mbti-hero">
+          <p class="mbti-code">${data.code}</p>
+          <strong>${data.alias}</strong>
+          <span>${data.intro}</span>
+        </div>
+      `;
+
+      const traitList = document.createElement("div");
+      traitList.className = "mbti-list";
+      data.traits.forEach((trait) => {
+        const item = document.createElement("article");
+        item.className = "mbti-item";
+        item.innerHTML = `<strong>${trait.title}</strong><span>${trait.text}</span>`;
+        traitList.appendChild(item);
+      });
+      left.appendChild(traitList);
+
+      const right = document.createElement("div");
+      right.className = "mbti-side-visual";
+      right.innerHTML = `<img src="./images/ENFJ.jpg" alt="ENFJ 主题图片">`;
+
+      topLayout.appendChild(left);
+      topLayout.appendChild(right);
+      wrapper.appendChild(topLayout);
+
+      const bottomTags = document.createElement("div");
+      bottomTags.className = "mbti-bottom-tags";
+      bottomTags.innerHTML = `<strong>关键词标签</strong>`;
+      const cloud = document.createElement("div");
+      cloud.className = "tag-cloud";
+      data.tags.forEach((tag) => {
+        const item = document.createElement("span");
+        item.textContent = tag;
+        cloud.appendChild(item);
+      });
+      bottomTags.appendChild(cloud);
+      wrapper.appendChild(bottomTags);
+
+      return wrapper;
+    }
+
+    function renderScheduleDetail(data) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "schedule-layout";
+
+      const left = document.createElement("div");
+      left.className = "schedule-grid";
+      data.courses.forEach((course) => {
+        const row = document.createElement("article");
+        row.className = "schedule-row";
+        row.innerHTML = `<strong>${course.name} · ${course.time}</strong><span>${course.note}</span>`;
+
+        const scoreLine = document.createElement("div");
+        scoreLine.className = "score-line";
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        track.innerHTML = `<div class="bar-fill" data-width="${Math.max(0, Math.min(100, (course.score / data.maxValue) * 100)).toFixed(1)}%"></div>`;
+        const score = document.createElement("span");
+        score.className = "bar-value";
+        score.textContent = course.score;
+        scoreLine.appendChild(track);
+        scoreLine.appendChild(score);
+        row.appendChild(scoreLine);
+        left.appendChild(row);
+      });
+
+      const right = document.createElement("div");
+      right.className = "detail-panel";
+      data.summaryCards.forEach((card) => {
+        const item = document.createElement("div");
+        item.className = "schedule-side-card";
+        item.innerHTML = `<strong>${card.title}</strong><span>${card.text}</span>`;
+        right.appendChild(item);
+      });
+
+      wrapper.appendChild(left);
+      wrapper.appendChild(right);
+      return wrapper;
+    }
+
+    function handleChinaMapResize() {
+      if (chinaMapChart) {
+        chinaMapChart.resize();
+      }
+    }
+
+    function disposeChinaMap() {
+      window.removeEventListener("resize", handleChinaMapResize);
+      if (chinaMapChart) {
+        chinaMapChart.dispose();
+        chinaMapChart = null;
+      }
+    }
+
+    function initChinaMap(data) {
+      const chartDom = document.getElementById("echartsChinaMap");
+      const tooltipDom = document.getElementById("mapTooltip");
+      if (!chartDom || typeof echarts === "undefined") {
+        if (tooltipDom) {
+          tooltipDom.textContent = "地图资源暂未加载成功，请检查网络或 CDN。";
+        }
+        return;
+      }
+
+      disposeChinaMap();
+
+      const styles = getComputedStyle(document.body);
+      const bgSoft = styles.getPropertyValue("--bg-soft").trim() || "#fffaf4";
+      const line = styles.getPropertyValue("--line").trim() || "rgba(108, 82, 64, 0.2)";
+      const accent = styles.getPropertyValue("--accent").trim() || "#c9775b";
+      const accentDeep = styles.getPropertyValue("--accent-deep").trim() || "#95553f";
+      const textColor = styles.getPropertyValue("--text").trim() || "#362821";
+
+      chinaMapChart = echarts.init(chartDom);
+
+      const visitedProvinceNames = [
+        "上海",
+        "北京",
+        "江苏",
+        "浙江",
+        "江西",
+        "天津",
+        "宁夏",
+        "山东",
+        "甘肃",
+        "青海",
+        "广东",
+        "云南",
+        "安徽",
+        "海南",
+        "福建",
+        "陕西",
+        "内蒙古"
+      ];
+
+      const ripplePoints = [
+        { name: "上海交通大学", value: [121.433, 31.025, 118] },
+        { name: "上海", value: [121.47, 31.23, 95] },
+        { name: "北京", value: [116.40, 39.90, 88] }
+      ];
+
+      const option = {
+        backgroundColor: "transparent",
+        tooltip: {
+          trigger: "item",
+          formatter: "{b}"
+        },
+        geo: {
+          map: "china",
+          roam: false,
+          selectedMode: false,
+          zoom: 1.06,
+          label: {
+            show: false,
+            emphasis: {
+              show: true,
+              color: textColor,
+              fontSize: 12
+            }
+          },
+          itemStyle: {
+            areaColor: bgSoft,
+            borderColor: line,
+            borderWidth: 1
+          },
+          emphasis: {
+            label: {
+              show: true,
+              color: textColor
+            },
+            itemStyle: {
+              areaColor: accent
+            }
+          },
+          regions: visitedProvinceNames.map((name) => ({
+            name,
+            itemStyle: {
+              areaColor: "rgba(201, 119, 91, 0.34)"
+            }
+          }))
+        },
+        series: [
+          {
+            name: "足迹点",
+            type: "effectScatter",
+            coordinateSystem: "geo",
+            data: ripplePoints,
+            symbolSize: (val) => Math.max(10, val[2] / 8),
+            showEffectOn: "render",
+            rippleEffect: {
+              brushType: "stroke",
+              scale: 4.6
+            },
+            itemStyle: {
+              color: accentDeep,
+              shadowBlur: 14,
+              shadowColor: accentDeep
+            },
+            zlevel: 2
+          }
+        ]
+      };
+
+      chinaMapChart.setOption(option);
+
+      chinaMapChart.on("mouseover", (params) => {
+        if (tooltipDom && params.name) {
+          tooltipDom.textContent = params.name;
+        }
+      });
+
+      chinaMapChart.on("mouseout", () => {
+        if (tooltipDom) {
+          tooltipDom.textContent = "地图支持悬停查看省份，涟漪点标记核心足迹。";
+        }
+      });
+
+      window.addEventListener("resize", handleChinaMapResize);
+    }
+
+    function renderDetailContent(detailId) {
+      const detail = DATA_GALLERY.details[detailId];
+      if (!detail) {
+        const empty = document.createElement("p");
+        empty.className = "detail-empty";
+        empty.textContent = "这个卡片还没有写详细内容，你可以在 DATA_GALLERY.details 里补上它。";
+        return empty;
+      }
+
+      if (detail.type === "timeline") return renderTimelineDetail(detail);
+      if (detail.type === "music") return renderMusicDetail(detail);
+      if (detail.type === "drama") return renderDramaDetail(detail);
+      if (detail.type === "cities") return renderCitiesDetail(detail);
+      if (detail.type === "mbti") return renderMbtiDetail(detail);
+      if (detail.type === "schedule") return renderScheduleDetail(detail);
+
+      const fallback = document.createElement("p");
+      fallback.className = "detail-empty";
+      fallback.textContent = "暂时没有匹配到这个卡片的渲染方式。";
+      return fallback;
+    }
+
+    function openDetail(detailId) {
+      const detail = DATA_GALLERY.details[detailId];
+      if (!detail) return;
+
+      currentDetailId = detailId;
+      stopCityLogAutoScroll({ resetPosition: true });
+      disposeChinaMap();
+      closeCityGallery({ silent: true });
+      detailTitle.textContent = detail.title;
+      detailDescription.textContent = detail.description;
+      detailPanel.innerHTML = "";
+      detailPanel.appendChild(renderDetailContent(detailId));
+      dataDetailShell.classList.add("open");
+      animateBars(detailPanel);
+
+      if (detail.type === "cities") {
+        initChinaMap(detail);
+        startCityLogAutoScroll();
+      }
+    }
+
+    function closeDetail() {
+      stopCityLogAutoScroll({ resetPosition: true });
+      disposeChinaMap();
+      closeCityGallery({ silent: true });
+      currentDetailId = null;
+      dataDetailShell.classList.remove("open");
+      detailPanel.innerHTML = "";
+      detailTitle.textContent = "数据详情";
+      detailDescription.textContent = "点开卡片后，这里会显示对应板块的详细内容。";
+    }
+
+    function switchPanel(panelName) {
+      const panelOrder = ["home", "about", "data", "easter-egg"];
+      const nextIndex = panelOrder.indexOf(panelName);
+      if (nextIndex === -1) return;
+
+      currentPanel = panelName;
+      stageTrack.style.transform = `translateX(-${nextIndex * 25}%)`;
+
+      stagePanels.forEach((panel) => {
+        panel.classList.toggle("is-active", panel.dataset.panel === panelName);
+      });
+
+      navPanelButtons.forEach((button) => {
+        button.classList.toggle("is-active", button.dataset.panelTarget === panelName);
+      });
+
+      if (panelName !== "data") {
+        closeDetail();
+      }
+    }
+
+    function startCityLogAutoScroll(options = {}) {
+      stopCityLogAutoScroll({ resetPosition: false });
+      const cityLog = detailPanel.querySelector(".city-log");
+      if (!cityLog) return;
+      const tracks = cityLog.querySelectorAll(".city-log-track");
+      if (tracks.length < 2) return;
+      if (isCityLogUserControlling) return;
+
+      cityLogOffset = options.resume ? cityLogSavedOffset : 0;
+      cityLog.scrollTop = cityLogOffset;
+      cityLogTimer = tracks[0].offsetHeight;
+
+      function tick() {
+        if (!cityLogTimer) return;
+        cityLogOffset += 0.35;
+        if (cityLogOffset >= cityLogTimer) {
+          cityLogOffset = 0;
+        }
+        cityLog.scrollTop = cityLogOffset;
+        cityLogSavedOffset = cityLogOffset;
+        cityLogRaf = window.requestAnimationFrame(tick);
+      }
+
+      cityLogRaf = window.requestAnimationFrame(tick);
+    }
+
+    function stopCityLogAutoScroll(options = {}) {
+      if (cityLogRaf) {
+        window.cancelAnimationFrame(cityLogRaf);
+        cityLogRaf = null;
+      }
+      if (cityLogResumeTimeout) {
+        window.clearTimeout(cityLogResumeTimeout);
+        cityLogResumeTimeout = null;
+      }
+      cityLogSavedOffset = cityLogOffset;
+      cityLogTimer = null;
+      if (options.resetPosition) {
+        cityLogOffset = 0;
+        cityLogSavedOffset = 0;
+        isCityLogUserControlling = false;
+      }
+    }
+
+    function scheduleCityLogResume() {
+      if (cityLogResumeTimeout) {
+        window.clearTimeout(cityLogResumeTimeout);
+      }
+      cityLogResumeTimeout = window.setTimeout(() => {
+        isCityLogUserControlling = false;
+        if (currentDetailId === "cities" && !detailPanel.querySelector("#cityGalleryOverlay.open")) {
+          startCityLogAutoScroll({ resume: true });
+        }
+      }, 1200);
+    }
+
+    function setupCityLogWheelControl(cityLog) {
+      if (!cityLog) return;
+
+      cityLog.addEventListener("wheel", (event) => {
+        const tracks = cityLog.querySelectorAll(".city-log-track");
+        const cycleHeight = tracks[0]?.offsetHeight || 0;
+        if (!cycleHeight) return;
+
+        event.preventDefault();
+        stopCityLogAutoScroll({ resetPosition: false });
+        isCityLogUserControlling = true;
+
+        cityLogOffset += event.deltaY;
+        while (cityLogOffset < 0) {
+          cityLogOffset += cycleHeight;
+        }
+        while (cityLogOffset >= cycleHeight) {
+          cityLogOffset -= cycleHeight;
+        }
+
+        cityLog.scrollTop = cityLogOffset;
+        cityLogSavedOffset = cityLogOffset;
+        scheduleCityLogResume();
+      }, { passive: false });
+    }
+
+    function openCityGallery(log) {
+      const layout = detailPanel.querySelector(".city-layout");
+      const overlay = detailPanel.querySelector("#cityGalleryOverlay");
+      const title = detailPanel.querySelector("#cityGalleryTitle");
+      const meta = detailPanel.querySelector("#cityGalleryMeta");
+      const grid = detailPanel.querySelector("#cityGalleryGrid");
+      if (!layout || !overlay || !title || !meta || !grid) return;
+
+      stopCityLogAutoScroll();
+      title.textContent = `${log.place} · 照片墙`;
+      meta.textContent = `${log.time}｜${log.note}`;
+      grid.innerHTML = "";
+
+      const photos = Array.isArray(log.photos)
+        ? log.photos
+        : typeof log.photos === "string"
+          ? (TRAVEL_PHOTOS[log.photos] || [])
+          : [];
+      if (!photos.length) {
+        const empty = document.createElement("div");
+        empty.className = "city-gallery-empty";
+        empty.textContent = "这条旅行记录的照片还没放进来。后续你把照片路径填到该条 logs 的 photos 数组里，例如：{ src: './images/travel/suzhou-1.jpg', caption: '平江路夜色' }。";
+        grid.appendChild(empty);
+      } else {
+        photos.forEach((photo, index) => {
+          const photoSrc = typeof photo === "string" ? photo : photo.src;
+          const photoAlt = typeof photo === "string" ? `${log.place} 照片 ${index + 1}` : (photo.alt || `${log.place} 照片 ${index + 1}`);
+          const photoCaption = typeof photo === "string" ? "" : (photo.caption || "");
+          const card = document.createElement("figure");
+          card.className = "city-photo-card";
+          card.innerHTML = `<img src="${photoSrc}" alt="${photoAlt}">`;
+          if (photoCaption) {
+            const caption = document.createElement("span");
+            caption.textContent = photoCaption;
+            card.appendChild(caption);
+          }
+          grid.appendChild(card);
+        });
+      }
+
+      overlay.classList.add("open");
+      layout.classList.add("gallery-mode");
+      dataDetailShell.scrollTop = 0;
+    }
+
+    function closeCityGallery(options = {}) {
+      const layout = detailPanel.querySelector(".city-layout");
+      const overlay = detailPanel.querySelector("#cityGalleryOverlay");
+      const grid = detailPanel.querySelector("#cityGalleryGrid");
+      if (grid) {
+        grid.innerHTML = "";
+      }
+      if (overlay) {
+        overlay.classList.remove("open");
+      }
+      if (layout) {
+        layout.classList.remove("gallery-mode");
+      }
+
+      if (!options.silent && currentDetailId === "cities") {
+        startCityLogAutoScroll({ resume: true });
+      }
+    }
+
+    function nextQuote() {
+      quoteText.textContent = QUOTES[quoteIndex];
+      quoteBubble.querySelector("strong").textContent = `头像吐槽 ${quoteIndex + 1}/${QUOTES.length}`;
+      quoteIndex = (quoteIndex + 1) % QUOTES.length;
+    }
+
+    function nextFortune() {
+      fortuneIndex = (fortuneIndex + 1) % FORTUNES.length;
+      fortuneText.textContent = FORTUNES[fortuneIndex];
+      fortuneCard.classList.remove("active");
+      window.requestAnimationFrame(() => {
+        fortuneCard.classList.add("active");
+      });
+    }
+
+    function createSparks() {
+      const rect = sparkBox.getBoundingClientRect();
+      const count = window.innerWidth < 720 ? 14 : 22;
+
+      for (let i = 0; i < count; i += 1) {
+        const spark = document.createElement("span");
+        spark.className = "spark";
+        spark.style.left = `${Math.random() * (rect.width - 20) + 10}px`;
+        spark.style.top = `${Math.random() * (rect.height - 30) + 20}px`;
+        spark.style.animationDelay = `${Math.random() * 120}ms`;
+        spark.style.background = i % 2 === 0
+          ? "radial-gradient(circle, rgba(255,255,255,0.95), rgba(239,154,114,0.78))"
+          : "radial-gradient(circle, rgba(255,244,226,0.95), rgba(196,111,79,0.75))";
+        sparkBox.appendChild(spark);
+
+        setTimeout(() => {
+          spark.remove();
+        }, 1400);
+      }
+    }
+
+    function getMessageTimeLabel() {
+      const now = new Date();
+      return `${now.getMonth() + 1}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    }
+
+    function loadGuestbookMessages() {
+      const stored = localStorage.getItem(GUESTBOOK_STORAGE_KEY);
+      if (!stored) {
+        guestbookMessages = [...GUESTBOOK_SEED_MESSAGES];
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        guestbookMessages = Array.isArray(parsed) && parsed.length ? parsed : [...GUESTBOOK_SEED_MESSAGES];
+      } catch (error) {
+        guestbookMessages = [...GUESTBOOK_SEED_MESSAGES];
+      }
+    }
+
+    function saveGuestbookMessages() {
+      localStorage.setItem(GUESTBOOK_STORAGE_KEY, JSON.stringify(guestbookMessages));
+    }
+
+    function renderGuestbookFeed() {
+      if (!guestbookFeed) return;
+      guestbookFeed.innerHTML = "";
+      const list = guestbookMessages.slice().reverse();
+      list.forEach((message) => {
+        const item = document.createElement("article");
+        item.className = "guestbook-message";
+        item.innerHTML = `
+          <strong>${message.name || "匿名访客"}</strong>
+          <p>${message.text}</p>
+          <small>${message.time}</small>
+        `;
+        guestbookFeed.appendChild(item);
+      });
+    }
+
+    function spawnDanmu(message, options = {}) {
+      if (!danmuLayer || !message || !message.text) return;
+      const item = document.createElement("div");
+      item.className = "danmu-item";
+      item.innerHTML = `<strong>${message.name || "匿名访客"}</strong><span>${message.text}</span>`;
+
+      const laneCount = window.innerWidth < 720 ? 5 : 7;
+      const lane = options.lane ?? Math.floor(Math.random() * laneCount);
+      item.style.top = `${22 + lane * 38}px`;
+      item.style.animationDuration = `${options.duration ?? (14 + Math.random() * 6)}s`;
+      item.style.opacity = `${options.opacity ?? 0.98}`;
+      danmuLayer.appendChild(item);
+
+      setTimeout(() => {
+        item.remove();
+      }, 22000);
+    }
+
+    function replayDanmuWall() {
+      const queue = guestbookMessages.slice(-6);
+      queue.forEach((message, index) => {
+        setTimeout(() => {
+          spawnDanmu(message, { lane: index % (window.innerWidth < 720 ? 5 : 7), duration: 15 + (index % 3) * 2 });
+        }, index * 700);
+      });
+    }
+
+    function emitEmojiBurst({ x, y, emojis, count = 18, spreadX = 0.55, riseMin = 40, riseMax = 180, sizeJitter = true }) {
+      if (!sparkBox) return;
+      const rect = sparkBox.getBoundingClientRect();
+
+      for (let i = 0; i < count; i += 1) {
+        const particle = document.createElement("span");
+        particle.className = "burst-emoji";
+        particle.textContent = emojis[i % emojis.length];
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.setProperty("--dx", `${(Math.random() - 0.5) * rect.width * spreadX}px`);
+        particle.style.setProperty("--dy", `${-(riseMin + Math.random() * (riseMax - riseMin))}px`);
+        particle.style.setProperty("--rot", `${(Math.random() - 0.5) * 120}deg`);
+        particle.style.animationDelay = `${Math.random() * 120}ms`;
+        if (sizeJitter) {
+          particle.style.fontSize = `${1.2 + Math.random() * 1.1}rem`;
+        }
+        sparkBox.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, 1700);
+      }
+    }
+
+    function burstFromButton(button, emojis, count) {
+      if (!button || !sparkBox) return;
+      const boxRect = sparkBox.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      const x = buttonRect.left - boxRect.left + buttonRect.width / 2;
+      const y = buttonRect.top - boxRect.top + buttonRect.height / 2;
+      emitEmojiBurst({
+        x,
+        y,
+        emojis,
+        count,
+        spreadX: 0.34,
+        riseMin: 120,
+        riseMax: 260
+      });
+      setTimeout(() => {
+        emitEmojiBurst({
+          x,
+          y,
+          emojis,
+          count: Math.max(10, Math.floor(count * 0.7)),
+          spreadX: 0.22,
+          riseMin: 90,
+          riseMax: 210
+        });
+      }, 120);
+    }
+
+    function launchFireworks() {
+      if (!sparkBox) return;
+      const rect = sparkBox.getBoundingClientRect();
+      const bursts = window.innerWidth < 720 ? 3 : 5;
+      for (let i = 0; i < bursts; i += 1) {
+        setTimeout(() => {
+          emitEmojiBurst({
+            x: rect.width * (0.18 + Math.random() * 0.64),
+            y: rect.height * (0.18 + Math.random() * 0.34),
+            emojis: ["🎆", "🎇", "✨", "💥", "🌟"],
+            count: window.innerWidth < 720 ? 16 : 24
+          });
+        }, i * 220);
+      }
+    }
+
+    function handleGuestbookSubmit(event) {
+      event.preventDefault();
+      const rawName = guestNameInput ? guestNameInput.value.trim() : "";
+      const rawText = guestMessageInput ? guestMessageInput.value.trim() : "";
+      if (!rawText) return;
+
+      const message = {
+        id: `msg-${Date.now()}`,
+        name: rawName || "匿名访客",
+        text: rawText.slice(0, 80),
+        time: getMessageTimeLabel()
+      };
+
+      guestbookMessages = [...guestbookMessages, message].slice(-GUESTBOOK_MAX_MESSAGES);
+      saveGuestbookMessages();
+      renderGuestbookFeed();
+      spawnDanmu(message, { duration: 16, opacity: 1 });
+      if (guestNameInput) guestNameInput.value = "";
+      if (guestMessageInput) guestMessageInput.value = "";
+    }
+
+    function initGuestbook() {
+      loadGuestbookMessages();
+      saveGuestbookMessages();
+      renderGuestbookFeed();
+      replayDanmuWall();
+      window.__clearCafeGuestbook = () => {
+        localStorage.removeItem(GUESTBOOK_STORAGE_KEY);
+        guestbookMessages = [...GUESTBOOK_SEED_MESSAGES];
+        saveGuestbookMessages();
+        renderGuestbookFeed();
+      };
+    }
+
+    function loadTheme() {
+      const stored = localStorage.getItem("cafe-theme");
+      if (stored === "dark") {
+        document.body.classList.add("dark");
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      localStorage.setItem("cafe-theme", isDark ? "dark" : "light");
+      if (chinaMapChart && DATA_GALLERY.details.cities) {
+        initChinaMap(DATA_GALLERY.details.cities);
+      }
+    }
+
+    function setupReveal() {
+      const sections = document.querySelectorAll(".reveal");
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.18 });
+
+      sections.forEach((section) => observer.observe(section));
+    }
+
+    renderProfile();
+    renderOverviewCards();
+    loadTheme();
+    setupReveal();
+    initGuestbook();
+
+    themeToggle.addEventListener("click", toggleTheme);
+    avatarButton.addEventListener("click", nextQuote);
+    detailBackButton.addEventListener("click", closeDetail);
+    panelSwitchButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        switchPanel(button.dataset.panelTarget);
+      });
+    });
+    fortuneButton.addEventListener("click", () => {
+      nextFortune();
+      createSparks();
+    });
+    if (guestbookForm) {
+      guestbookForm.addEventListener("submit", handleGuestbookSubmit);
+    }
+    if (fireworksButton) {
+      fireworksButton.addEventListener("click", launchFireworks);
+    }
+    if (heartBurstButton) {
+      heartBurstButton.addEventListener("click", () => {
+        burstFromButton(heartBurstButton, ["💗", "💖", "💘", "💕", "💞", "💓", "💝"], window.innerWidth < 720 ? 24 : 36);
+      });
+    }
+    if (cheerBurstButton) {
+      cheerBurstButton.addEventListener("click", () => {
+        burstFromButton(cheerBurstButton, ["👍", "🥳", "🌞", "💪", "🎉", "✨", "🎈", "🌟"], window.innerWidth < 720 ? 26 : 40);
+      });
+    }
+    if (shuffleDanmuButton) {
+      shuffleDanmuButton.addEventListener("click", replayDanmuWall);
+    }
+  </script>
+</body>
+</html>
